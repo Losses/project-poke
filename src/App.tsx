@@ -4,11 +4,13 @@ import './App.css';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import { RevealProvider } from './components/reveal/RevealContext';
-import { RevealBoundary } from './components/reveal/RevealBoundary';
+import RevealBoundary from './components/reveal/RevealBoundary';
 
 import Button from './components/button/Button';
 import List from './components/list/List';
 import ListItem from './components/list/ListItem';
+
+import Reveal from './components/reveal/Reveal';
 
 import theme from './theme/dark';
 
@@ -19,7 +21,7 @@ export interface AppProps {
 const App: React.FC<AppProps> = () => {
   return (
     <MuiThemeProvider theme={theme}>
-     <CssBaseline />
+      <CssBaseline />
       <RevealProvider>
         <RevealBoundary>
           <div className="button-set">
@@ -35,8 +37,8 @@ const App: React.FC<AppProps> = () => {
               <Button>Poke!</Button>
             </div>
           </div>
-          </RevealBoundary>
-          <RevealBoundary dynamicBoundingRect>
+        </RevealBoundary>
+        {/* <RevealBoundary dynamicBoundingRect>
           <div className="list">
             <h1>List example:</h1>
             <List>
@@ -54,7 +56,15 @@ const App: React.FC<AppProps> = () => {
               <ListItem>Third List Item</ListItem>
             </List>
           </div>
-        </RevealBoundary>
+
+          <div>
+            <h1>Use independently:</h1>
+            <div className='test-reveal'>
+              <Reveal />
+            </div>
+          </div>
+
+        </RevealBoundary> */}
       </RevealProvider>
     </MuiThemeProvider>
   );
