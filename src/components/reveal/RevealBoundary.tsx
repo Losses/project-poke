@@ -1,55 +1,82 @@
 import * as React from 'react';
 
-const DEFAULT_VALUE = {
-  mouseInBoundary: false,
-  dynamicBoundingRect: false
+import RevealContext, { RevealContextTypes, RevealConsumer } from './RevealContext';
+import { RevealBoundaryStore } from './RevealStateManager';
+
+export type RevealBoundaryProps = {
+  dynamicBoundingRect?: boolean
 };
 
-export interface RevealBoundaryProps {
-  dynamicBoundingRect?: boolean
+export interface RevealBoundaryState {
+  storage?: RevealBoundaryStore
 }
 
-export interface RevealBoundaryStates {
-  mouseInBoundary: boolean
-}
-
-export type RevealBoundaryContextTypes = RevealBoundaryProps & RevealBoundaryStates;
-
-const RevealBoundaryContext = React.createContext<RevealBoundaryContextTypes>(DEFAULT_VALUE);
+export type RevealBoundaryContextTypes = RevealBoundaryState;
 
 const RevealBoundary: React.FC<RevealBoundaryProps> = (props) => {
-  const [revealBoundaryState, setrevealBoundaryState] = React.useState<RevealBoundaryStates>(DEFAULT_VALUE);
-
-  const handleMouseEnter = (ev: any) => {
-    setrevealBoundaryState(
-      (state: RevealBoundaryStates) => ({
-        ...state,
-        mouseInBoundary: true
-      })
-    )
-  }
-
-  const handleMouseLeave = (ev: any) => {
-    setrevealBoundaryState(
-      (state: RevealBoundaryStates) => ({
-        ...state,
-        mouseInBoundary: false
-      })
-    )
-  }
-
   return (
-    <RevealBoundaryContext.Provider value={{ ...revealBoundaryState, ...props }}>
-    {/* 这里这么写有个问题，如果鼠标位置到了 div 外面，光效就会“卡住”，你应该用 effect 把事件绑定到 document 上 */}
-      <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        {props.children}
-      </div>
-
-    </RevealBoundaryContext.Provider>
-  );
+    <RevealConsumer>
+      {(context) => (
+        <RevealBoundaryContent context={context} {...props}>
+          {props.children}
+        </RevealBoundaryContent>
+      )}
+    </RevealConsumer>
+  )
 }
+
+export interface RevealBoundaryContentProps {
+  context: RevealContextTypes,
+  [key: string]: any
+}
+
+const RevealBoundaryContext = React.createContext<RevealBoundaryContextTypes>({} as RevealBoundaryContextTypes);
+
+class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> {
+  storage: RevealBoundaryStore;
+
+  constructor(props: RevealBoundaryContentProps) {
+    super(props);
+
+    this.storage = props.context.storageManager.newBoundary();
+  }
+
+  handleMouseEnter = (ev: any) => {
+    this.storage.mouseInBoundary = true;
+
+    window.requestAnimationFrame(() => this.storage.paintAll());
+  }
+
+  handleMouseLeave = (ev: any) => {
+    this.storage.mouseInBoundary = false;
+    
+    this.storage.paintAll(true);
+  }
+
+  handleMouseMove = (ev: any) => {
+    this.storage.clientX = ev.clientX;
+    this.storage.clientY = ev.clientY;
+    this.storage.dirty = true;
+  }
+
+  render() {
+    return (
+      <RevealBoundaryContext.Provider value={{ storage: this.storage }}>
+        <div
+          className="poke-reveal-boundary"
+          onMouseEnter={this.handleMouseEnter}
+          onMouseLeave={this.handleMouseLeave}
+          onMouseMove={this.handleMouseMove}
+        >
+          {this.props.children}
+        </div>
+      </RevealBoundaryContext.Provider>
+    );
+  }
+}
+
 
 const RevealBoundaryConsumer = RevealBoundaryContext.Consumer;
 
-export default RevealBoundaryContext;
-export { RevealBoundary, RevealBoundaryConsumer };
+export default RevealBoundary;
+export { RevealBoundaryContext, RevealBoundaryConsumer };
