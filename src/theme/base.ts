@@ -1,6 +1,4 @@
-import { createMuiTheme } from '@material-ui/core/styles';
-
-const theme = createMuiTheme({
+export default {
   typography: {
     useNextVariants: true,
   },
@@ -14,6 +12,4 @@ const theme = createMuiTheme({
       hoverOpacity: 0
     }
   }
-});
-
-export default theme;
+}
