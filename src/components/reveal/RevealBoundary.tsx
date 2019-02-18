@@ -56,7 +56,6 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
   handleMouseMove = (ev: any) => {
     this.storage.clientX = ev.clientX;
     this.storage.clientY = ev.clientY;
-    this.storage.dirty = true;
   }
 
   render() {

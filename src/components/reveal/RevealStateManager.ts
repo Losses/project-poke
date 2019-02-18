@@ -183,8 +183,6 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
 
   if (isNaN(relativeX) || isNaN(relativeY)) return;
 
-  config.ctx.fillRect(0, 0, width, height);
-
   if (borderStyle !== 'none') {
     const borderGrd = config.ctx.createRadialGradient(
       relativeX, relativeY, 0,
