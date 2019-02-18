@@ -38,8 +38,8 @@ const App: React.FC<AppProps> = () => {
             </div>
           </div>
         </RevealBoundary>
-        {/* <RevealBoundary dynamicBoundingRect>
-          <div className="list">
+        <RevealBoundary dynamicBoundingRect>
+          {/* <div className="list">
             <h1>List example:</h1>
             <List>
               <ListItem>First List Item</ListItem>
@@ -55,7 +55,7 @@ const App: React.FC<AppProps> = () => {
               <ListItem>Second List Item</ListItem>
               <ListItem>Third List Item</ListItem>
             </List>
-          </div>
+          </div> */}
 
           <div>
             <h1>Use independently:</h1>
@@ -64,7 +64,7 @@ const App: React.FC<AppProps> = () => {
             </div>
           </div>
 
-        </RevealBoundary> */}
+        </RevealBoundary>
       </RevealProvider>
     </MuiThemeProvider>
   );
