@@ -11,7 +11,7 @@ const ListItem: React.SFC<ListItemProps> = (props) => {
   return (
     <MaterialListItem {...props}>
       {props.children}
-      <Reveal borderStyle="half" />
+      <Reveal />
     </MaterialListItem>
   );
 }
