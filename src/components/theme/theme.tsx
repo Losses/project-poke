@@ -1,12 +1,13 @@
 import * as React from 'react';
 
+//TODO: CHANGE HERE!
 export interface Theme {
   [key: string]: any
 }
 
-const GlobalTheme = React.createContext<Theme>({});
-const CustomTheme = React.createContext<Theme>({});
-const ComponentTheme = React.createContext<Theme>({});
+const GlobalTheme = React.createContext<Theme>([{}, null]);
+const CustomTheme = React.createContext<Theme>([{}, null]);
+const ComponentTheme = React.createContext<Theme>([{}, null]);
 
 
 export interface ThemeProvider {
@@ -48,9 +49,9 @@ const useTheme = (defaultTheme: Theme) => {
   if (!themeKeys) return;
 
   const pickTheme = (x: Theme) => (({ ...themeKeys }) => ({ ...themeKeys }))(x);
-  const globalTheme = React.useContext(GlobalTheme);
-  const customTheme = React.useContext(CustomTheme);
-  const componentTheme = React.useContext(ComponentTheme);
+  const globalTheme = React.useContext(GlobalTheme)[0];
+  const customTheme = React.useContext(CustomTheme)[0];
+  const componentTheme = React.useContext(ComponentTheme)[0];
 
   let answer;
 
