@@ -3,22 +3,23 @@ export interface RevealStateManagerTypes {
 }
 
 export interface RevealStyle {
-  color?: string,
-  borderStyle?: 'full' | 'half' | 'none',
-  borderWidth?: number,
-  fillMode?: 'relative' | 'absolute' | 'none',
-  fillRadius?: number
+  color: string,
+  borderStyle: 'full' | 'half' | 'none',
+  borderWidth: number,
+  fillMode: 'relative' | 'absolute' | 'none',
+  fillRadius: number
 }
 
 export const revealStyleKeys: string[] = ['color', 'borderStyle', 'borderWidth', 'fillMode', 'fillRadius'];
 
-type CanvasConfig = RevealStyle & {
+type CanvasConfig = {
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D | null,
   top: number,
   left: number,
   width: number,
   height: number,
+  style: RevealStyle
 }
 
 export type RevealBoundaryStore = {
@@ -69,7 +70,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           return answer;
         });
       },
-      addReveal: ($el: HTMLCanvasElement) => {
+      addReveal: ($el: HTMLCanvasElement, style: RevealStyle) => {
         const canvasConfig: CanvasConfig = {
           canvas: $el,
           ctx: $el.getContext('2d'),
@@ -77,11 +78,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           left: 0,
           width: 0,
           height: 0,
-          color: '0, 0, 0',
-          borderStyle: 'full',
-          borderWidth: 1,
-          fillMode: 'relative',
-          fillRadius: 2
+          style
         };
 
         setCanvasRect(canvasConfig);
@@ -150,14 +147,13 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
 
   if (!storage.mouseInBoundary) return;
 
-  const { color, borderStyle, borderWidth, fillMode, fillRadius } = config;
-
-  if (!color || !borderStyle || !borderWidth || !fillMode || !fillRadius) return;
+  const { color, borderStyle, borderWidth, fillMode, fillRadius } = config.style;
 
   const relativeX = storage.clientX - left;
   const relativeY = storage.clientY - top;
+  const maxDim = Math.max(height, width);
 
-  const trueFillRadius = fillMode === 'relative' ? height * fillRadius : fillRadius;
+  const trueFillRadius = fillMode === 'relative' ? maxDim * fillRadius : fillRadius;
   let fillX = 0, fillY = 0, fillW = 0, fillH = 0;
 
   switch (borderStyle) {
@@ -189,7 +185,7 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
       relativeX, relativeY, trueFillRadius
     );
 
-    borderGrd.addColorStop(0, 'rgba(' + color + ', 0.8)');
+    borderGrd.addColorStop(0, 'rgba(' + color + ', 0.6)');
     borderGrd.addColorStop(1, 'rgba(' + color + ', 0.0)');
 
     config.ctx.fillStyle = borderGrd;
