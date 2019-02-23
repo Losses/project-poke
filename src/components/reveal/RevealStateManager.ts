@@ -7,7 +7,8 @@ export interface RevealStyle {
   borderStyle: 'full' | 'half' | 'none',
   borderWidth: number,
   fillMode: 'relative' | 'absolute' | 'none',
-  fillRadius: number
+  fillRadius: number,
+  borderWhileNotHover: boolean
 }
 
 export const revealStyleKeys: string[] = ['color', 'borderStyle', 'borderWidth', 'fillMode', 'fillRadius'];
@@ -140,20 +141,25 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
 
   if (!config.ctx) return;
 
-  const { top, left, width, height } = config;
+  const { top, left, width, height } = config.canvas.getBoundingClientRect();;
 
   config.ctx.clearRect(0, 0, width, height);
   storage.dirty = false;
 
   if (!storage.mouseInBoundary) return;
 
-  const { color, borderStyle, borderWidth, fillMode, fillRadius } = config.style;
+  const { color, borderStyle, borderWidth, fillMode, fillRadius, borderWhileNotHover } = config.style;
 
   const relativeX = storage.clientX - left;
   const relativeY = storage.clientY - top;
-  const maxDim = Math.max(height, width);
 
-  const trueFillRadius = fillMode === 'relative' ? maxDim * fillRadius : fillRadius;
+  const notHover = relativeX < 0 || relativeX > width || relativeY < 0 || relativeY > height;
+
+  if (notHover && !config.style.borderWhileNotHover) return;
+
+  const minDim = Math.min(height, width);
+
+  const trueFillRadius = fillMode === 'relative' ? minDim * fillRadius : fillRadius;
   let fillX = 0, fillY = 0, fillW = 0, fillH = 0;
 
   switch (borderStyle) {
@@ -194,15 +200,14 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
   }
 
   if (fillMode == 'none') return;
-  if (relativeX < 0 || relativeX > width) return;
-  if (relativeY < 0 || relativeY > height) return;
+  if (notHover) return;
 
   const fillGrd = config.ctx.createRadialGradient(
     relativeX, relativeY, 0,
     relativeX, relativeY, trueFillRadius
   );
 
-  fillGrd.addColorStop(0, 'rgba(' + color + ', 0.3)');
+  fillGrd.addColorStop(0, 'rgba(' + color + ', 0.2)');
   fillGrd.addColorStop(1, 'rgba(' + color + ', 0.0)');
 
   config.ctx.fillStyle = fillGrd;
