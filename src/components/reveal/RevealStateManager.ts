@@ -102,7 +102,12 @@ class RevealStateManager<RevealStateManagerTypes> {
         });
       },
       getCanvasPaintingStyle: (config: CanvasConfig) => {
-        const { top, left, width, height } = config.canvas.getBoundingClientRect();
+        let { top, left, width, height } = config.canvas.getBoundingClientRect();
+
+        top = Math.round(top);
+        left = Math.round(left);
+        width = Math.round(width);
+        height = Math.round(height);
 
         let trueFillRadius;
 
