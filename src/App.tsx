@@ -39,12 +39,12 @@ const App: React.FC<AppProps> = () => {
           </div>
         </RevealBoundary>
         <RevealBoundary dynamicBoundingRect>
-          {/* <div className="list">
+          <div className="list">
             <h1>List example:</h1>
             <List>
               <ListItem>First List Item</ListItem>
               <ListItem>Second List Item</ListItem>
-              <ListItem>Third List Item</ListItem>
+              <ListItem>Third List Item</ListItem> 
               <ListItem>First List Item</ListItem>
               <ListItem>Second List Item</ListItem>
               <ListItem>Third List Item</ListItem>
@@ -55,12 +55,12 @@ const App: React.FC<AppProps> = () => {
               <ListItem>Second List Item</ListItem>
               <ListItem>Third List Item</ListItem>
             </List>
-          </div> */}
+          </div>
 
           <div>
             <h1>Use independently:</h1>
             <div className='test-reveal'>
-              <Reveal />
+              <Reveal /> 
             </div>
           </div>
 
