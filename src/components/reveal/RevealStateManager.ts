@@ -214,7 +214,7 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
   const relativeX = storage.clientX - left;
   const relativeY = storage.clientY - top;
 
-  let fillX = 0, fillY = 0, fillW = 0, fillH = 0, putX = 0, putY = 0;
+  let fillX = 0, fillY = 0, fillW = 0, fillH = 0;
 
   switch (borderStyle) {
     case 'full':
@@ -237,8 +237,8 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
       break;
   }
 
-  putX = relativeX - trueFillRadius;
-  putY = relativeY - trueFillRadius;
+  const putX = relativeX - trueFillRadius;
+  const putY = relativeY - trueFillRadius;
 
   if (isNaN(relativeX) || isNaN(relativeY)) return;
 
