@@ -41,19 +41,19 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
     this.storage = props.context.storageManager.newBoundary();
   }
 
-  handleMouseEnter = (ev: any) => {
+  handleMouseEnter = () => {
     this.storage.mouseInBoundary = true;
 
     window.requestAnimationFrame(() => this.storage.paintAll());
   }
 
-  handleMouseLeave = (ev: any) => {
+  handleMouseLeave = () => {
     this.storage.mouseInBoundary = false;
-    
+
     this.storage.paintAll(true);
   }
 
-  handleMouseMove = (ev: any) => {
+  handleMouseMove = (ev: React.MouseEvent) => {
     this.storage.clientX = ev.clientX;
     this.storage.clientY = ev.clientY;
   }
