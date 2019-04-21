@@ -7,7 +7,11 @@ import { useTheme } from '../theme/theme';
 import styles from './styles/Reveal.module.css';
 
 export interface RevealProps {
-
+  color?: string,
+  borderStyle?: 'full' | 'half' | 'none',
+  borderWidth?: number,
+  fillMode?: 'relative' | 'absolute' | 'none',
+  fillRadius?: number
 }
 
 const Reveal: React.SFC<RevealProps> = (props) => {
@@ -17,7 +21,8 @@ const Reveal: React.SFC<RevealProps> = (props) => {
     borderStyle: 'full',
     borderWidth: 1,
     fillMode: 'relative',
-    fillRadius: 2
+    fillRadius: 2,
+    borderWhileNotHover: true
   }) as RevealStyle;
 
   const canvasRef: React.RefObject<HTMLCanvasElement> = React.createRef();
