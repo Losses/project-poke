@@ -3,6 +3,10 @@ import './App.css';
 
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { MuiThemeProvider } from '@material-ui/core/styles';
+
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
+
 import { RevealProvider } from './components/reveal/RevealContext';
 import RevealBoundary from './components/reveal/RevealBoundary';
 
@@ -19,6 +23,8 @@ export interface AppProps {
 }
 
 const App: React.FC<AppProps> = () => {
+  const [enlarge, setEnlarge] = React.useState<boolean>(true);
+
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
@@ -56,14 +62,24 @@ const App: React.FC<AppProps> = () => {
               <ListItem>Third List Item</ListItem>
             </List>
           </div>
-
+        </RevealBoundary>
+        <RevealBoundary>
           <div>
             <h1>Use independently:</h1>
-            <div className='test-reveal'>
-              <Reveal /> 
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={enlarge}
+                  onChange={(ev) => setEnlarge(ev.target.checked)}
+                  value="checked"
+                />
+              }
+              label="Large Tile"
+            />
+            <div className={enlarge ? 'test-reveal' : 'test-reveal-large'}>
+              <Reveal />
             </div>
           </div>
-
         </RevealBoundary>
       </RevealProvider>
     </MuiThemeProvider>

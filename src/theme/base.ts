@@ -7,8 +7,8 @@ export default {
   },
   palette: {
     action: {
-      hover: 'none',
-      active: 'none',
+      hover: 'rgba(0,0,0,0)',
+      active: 'rgba(0,0,0,0)',
       hoverOpacity: 0
     }
   }
