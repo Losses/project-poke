@@ -9,8 +9,7 @@ export interface RevealStyle {
   borderStyle: 'full' | 'half' | 'none',
   borderWidth: number,
   fillMode: 'relative' | 'absolute' | 'none',
-  fillRadius: number,
-  borderWhileNotHover: boolean
+  fillRadius: number
 }
 
 export const revealStyleKeys: string[] = ['color', 'borderStyle', 'borderWidth', 'fillMode', 'fillRadius'];
@@ -253,8 +252,9 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
   }
 
   if (fillMode == 'none') return;
-  if (notHover) return;
-
+  if (relativeX < 0 || relativeX > width) return;
+  if (relativeY < 0 || relativeY > height) return;
+  
   config.ctx.putImageData(config.cachedRevealBitmap[1].bitmap, putX, putY, fillX - putX, fillY - putY, fillW, fillH);
 }
 
