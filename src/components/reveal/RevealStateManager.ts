@@ -1,7 +1,7 @@
 import { isWidthDown } from "@material-ui/core/withWidth";
 
 export interface RevealStateManagerTypes {
-  newBoundary: Function
+  newBoundary: () => RevealBoundaryStore
 }
 
 export interface RevealStyle {
@@ -32,17 +32,21 @@ export type RevealBoundaryStore = {
   // The cursor position of painted reveal effect.
   paintedClientX: number,
   paintedClientY: number,
-  destory: Function,
+  destroy(): void,
   // Add a new reveal effect.
-  addReveal: Function,
-  removeReveal: Function,
-  cacheRevealBitmaps: Function,
-  getCanvasPaintingStyle: Function,
+  addReveal($el: HTMLCanvasElement, style: RevealStyle): void,
+  removeReveal($el: HTMLCanvasElement): void,
+  cacheRevealBitmaps(config: CanvasConfig): void,
+  getCanvasPaintingStyle(config: CanvasConfig): {
+    top: number; left: number;
+    width: number; height: number;
+    trueFillRadius: number; cacheCanvasSize: number;
+  },
   mouseInBoundary: boolean,
   canvasList: Array<CanvasConfig>,
   dynamicBoundingRect: boolean,
-  paintAll: Function,
-  resetAll: Function,
+  paintAll(force?: boolean): void,
+  resetAll(): void,
   dirty: boolean,
   [key: string]: any
 }
@@ -64,7 +68,7 @@ class RevealStateManager<RevealStateManagerTypes> {
 
   newBoundary() {
     const hashId = this._currentHashId++;
-    const storage = <RevealBoundaryStore>{
+    const storage: RevealBoundaryStore = {
       _currentHashId: 0,
       id: hashId,
       clientX: -1000,
@@ -75,7 +79,7 @@ class RevealStateManager<RevealStateManagerTypes> {
       canvasList: [],
       dynamicBoundingRect: false,
       dirty: false,
-      destory: () => {
+      destroy: () => {
         this._storage.find((sto, idx) => {
           const answer = sto === storage;
 
@@ -104,7 +108,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           return answer;
         });
       },
-      getCanvasPaintingStyle: (config: CanvasConfig) => {
+      getCanvasPaintingStyle(config: CanvasConfig) {
         let { top, left, width, height } = config.canvas.getBoundingClientRect();
 
         top = Math.round(top);
@@ -213,7 +217,7 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
     storage.cacheRevealBitmaps(config);
   }
 
-  const {borderStyle, borderWidth, fillMode } = config.style;
+  const { borderStyle, borderWidth, fillMode } = config.style;
 
   const relativeX = storage.clientX - left;
   const relativeY = storage.clientY - top;
@@ -254,7 +258,7 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
   if (fillMode == 'none') return;
   if (relativeX < 0 || relativeX > width) return;
   if (relativeY < 0 || relativeY > height) return;
-  
+
   config.ctx.putImageData(config.cachedRevealBitmap[1].bitmap, putX, putY, fillX - putX, fillY - putY, fillW, fillH);
 }
 
