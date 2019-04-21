@@ -28,7 +28,7 @@ const Reveal: React.SFC<RevealProps> = (props) => {
     const $canvas = canvasRef.current;
 
     boundaryContext.storage.addReveal($canvas, revealTheme);
-  });
+  }, [-1]);
 
   return (
     <canvas ref={canvasRef} className={styles.reveal_canvas}></canvas>

@@ -26,11 +26,14 @@ type CanvasConfig = {
 export type RevealBoundaryStore = {
   _currentHashId: number,
   id: number,
+  // The current cursor position relative to window.
   clientX: number,
   clientY: number,
+  // The cursor position of painted reveal effect.
   paintedClientX: number,
   paintedClientY: number,
   destory: Function,
+  // Add a new reveal effect.
   addReveal: Function,
   removeReveal: Function,
   cacheRevealBitmaps: Function,
@@ -133,6 +136,7 @@ class RevealStateManager<RevealStateManagerTypes> {
         config.height = height;
         config.canvas.width = width;
         config.canvas.height = height;
+        config.cachedRevealBitmap = [];
 
         let fillAlpha, grd, revealCanvas, revealCtx;
 
