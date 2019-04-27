@@ -193,7 +193,7 @@ class RevealStateManager<RevealStateManagerTypes> {
             const trueFillRadius = Math.max(canvasConfig.canvas.width, canvasConfig.canvas.height);
 
             const _innerAlpha = 0.2 - frame * 0.7 * 1.7;
-            const _outerAlpha = 0.2 - frame * 0.7;
+            const _outerAlpha = 0.1 - frame * 0.05;
             const _outerBorder = 0.1 + frame * 0.9;
 
             const innerAlpha = _innerAlpha < 0 ? 0 : _innerAlpha;
