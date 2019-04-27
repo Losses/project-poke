@@ -244,7 +244,6 @@ class RevealStateManager<RevealStateManagerTypes> {
             storage.mouseDownAnimateCurrentFrame = relativeFrame;
 
             if (storage.mouseReleased && storage.mouseDownAnimateReleasedFrame === null) {
-              console.log('????');
               storage.mouseDownAnimateReleasedFrame = relativeFrame;
             }
 
@@ -254,6 +253,8 @@ class RevealStateManager<RevealStateManagerTypes> {
             storage.mouseDownAnimateLogicFrame = !storage.mouseReleased
               ? relativeFrame / speed
               : relativeFrame / speed + (relativeFrame - storage.mouseDownAnimateReleasedFrame) / speed * accelerateRate;
+
+            if (storage.mouseDownAnimateLogicFrame < 0) storage.mouseDownAnimateLogicFrame = 0;
           }
 
           if (storage.mouseDownAnimateLogicFrame && storage.mouseDownAnimateLogicFrame > 1) {
