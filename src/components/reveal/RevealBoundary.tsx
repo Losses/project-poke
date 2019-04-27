@@ -50,12 +50,23 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
   handleMouseLeave = () => {
     this.storage.mouseInBoundary = false;
 
-    this.storage.paintAll(true);
+    this.storage.paintAll(undefined, true);
   }
 
   handleMouseMove = (ev: React.MouseEvent) => {
     this.storage.clientX = ev.clientX;
     this.storage.clientY = ev.clientY;
+  }
+
+  handleMouseDown = () => {
+    this.storage.mouseDownAnimateStartFrame = null;
+    this.storage.mousePressed = true;
+    this.storage.mouseReleased = false;
+    this.storage.hoveringRevealConfig = this.storage.getHoveringRevealConfig();
+  }
+
+  handleMouseUp = () => {
+    this.storage.mouseReleased = true;
   }
 
   render() {
@@ -66,6 +77,8 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
           onMouseEnter={this.handleMouseEnter}
           onMouseLeave={this.handleMouseLeave}
           onMouseMove={this.handleMouseMove}
+          onMouseDown={this.handleMouseDown}
+          onMouseUp={this.handleMouseUp}
         >
           {this.props.children}
         </div>

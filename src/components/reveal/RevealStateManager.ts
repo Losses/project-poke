@@ -9,7 +9,9 @@ export interface RevealStyle {
   borderStyle: 'full' | 'half' | 'none',
   borderWidth: number,
   fillMode: 'relative' | 'absolute' | 'none',
-  fillRadius: number
+  fillRadius: number,
+  revealAnimateSpeed: number,
+  revealReleasedAccelerateRate: number
 }
 
 export const revealStyleKeys: string[] = ['color', 'borderStyle', 'borderWidth', 'fillMode', 'fillRadius'];
@@ -20,7 +22,15 @@ type CanvasConfig = {
   width: number,
   height: number,
   style: RevealStyle,
-  cachedRevealBitmap: CachedRevealBitmapSet
+  cachedRevealBitmap: CachedRevealBitmapSet,
+  getCanvasPaintingStyle(): {
+    top: number; left: number;
+    width: number; height: number;
+    trueFillRadius: number; cacheCanvasSize: number;
+  },
+  cacheRevealBitmaps(): void,
+  mouseInCanvas(): boolean,
+  getHoveringAnimateGrd(frame: number, grd: CanvasGradient): void,
 }
 
 export type RevealBoundaryStore = {
@@ -36,18 +46,24 @@ export type RevealBoundaryStore = {
   // Add a new reveal effect.
   addReveal($el: HTMLCanvasElement, style: RevealStyle): void,
   removeReveal($el: HTMLCanvasElement): void,
-  cacheRevealBitmaps(config: CanvasConfig): void,
-  getCanvasPaintingStyle(config: CanvasConfig): {
-    top: number; left: number;
-    width: number; height: number;
-    trueFillRadius: number; cacheCanvasSize: number;
-  },
   mouseInBoundary: boolean,
   canvasList: Array<CanvasConfig>,
   dynamicBoundingRect: boolean,
-  paintAll(force?: boolean): void,
+  paintAll(frame?: number, force?: boolean): void,
   resetAll(): void,
   dirty: boolean,
+
+  getHoveringRevealConfig(): CanvasConfig | null,
+  hoveringRevealConfig: CanvasConfig | null,
+  // Cursor position while mouse down.
+  mouseUpClientX: number | null,
+  mouseUpClientY: number | null,
+  mouseDownAnimateStartFrame: number | null,
+  mouseDownAnimateCurrentFrame: number | null,
+  mouseDownAnimateLogicFrame: number | null,
+  mousePressed: boolean,
+  mouseReleased: boolean
+
   [key: string]: any
 }
 
@@ -94,12 +110,108 @@ class RevealStateManager<RevealStateManagerTypes> {
           cachedRevealBitmap: [],
           width: 0,
           height: 0,
-          style
+          style,
+
+          getCanvasPaintingStyle: () => {
+            let { top, left, width, height } = canvasConfig.canvas.getBoundingClientRect();
+
+            top = Math.round(top);
+            left = Math.round(left);
+            width = Math.round(width);
+            height = Math.round(height);
+
+            let trueFillRadius;
+
+            if (canvasConfig.style.fillMode === 'none') {
+              trueFillRadius = 0;
+            } else {
+              trueFillRadius = canvasConfig.style.fillMode === 'relative'
+                ? Math.max(width, height) * canvasConfig.style.fillRadius
+                : canvasConfig.style.fillRadius;
+            }
+
+            const cacheCanvasSize = trueFillRadius * 2;
+
+            return { top, left, width, height, trueFillRadius, cacheCanvasSize };
+          },
+
+          cacheRevealBitmaps: () => {
+            if (!canvasConfig.ctx) return;
+
+            const { width, height, trueFillRadius, cacheCanvasSize } = canvasConfig.getCanvasPaintingStyle();
+
+            canvasConfig.width = width;
+            canvasConfig.height = height;
+            canvasConfig.canvas.width = width;
+            canvasConfig.canvas.height = height;
+            canvasConfig.cachedRevealBitmap = [];
+
+            let fillAlpha, grd, revealCanvas, revealCtx;
+
+            for (let i of ['border', 'fill']) {
+              revealCanvas = document.createElement('canvas');
+              revealCanvas.width = cacheCanvasSize;
+              revealCanvas.height = cacheCanvasSize;
+
+              revealCtx = revealCanvas.getContext('2d');
+              if (!revealCtx) return;
+
+              fillAlpha = i === 'border' ? ', 0.6)' : ', 0.3)';
+
+              grd = revealCtx.createRadialGradient(
+                trueFillRadius, trueFillRadius, 0,
+                trueFillRadius, trueFillRadius, trueFillRadius
+              )
+
+              grd.addColorStop(0, 'rgba(' + canvasConfig.style.color + fillAlpha);
+              grd.addColorStop(1, 'rgba(' + canvasConfig.style.color + ', 0.0)');
+
+              revealCtx.fillStyle = grd;
+              revealCtx.fillRect(0, 0, cacheCanvasSize, cacheCanvasSize);
+
+              canvasConfig.cachedRevealBitmap.push({
+                type: i,
+                bitmap: revealCtx.getImageData(0, 0, cacheCanvasSize, cacheCanvasSize)
+              });
+            }
+          },
+
+          mouseInCanvas: () => {
+            const { top, left, width, height } = canvasConfig.getCanvasPaintingStyle();
+
+            const relativeX = storage.clientX - left;
+            const relativeY = storage.clientY - top;
+
+            if (relativeX < 0 || relativeX > width) return false;
+            if (relativeY < 0 || relativeY > height) return false;
+            return true;
+          },
+
+          getHoveringAnimateGrd: (frame: number, grd: CanvasGradient) => {
+            if (!canvasConfig.ctx) return null;
+
+            const trueFillRadius = Math.max(canvasConfig.canvas.width, canvasConfig.canvas.height);
+
+            const _innerAlpha = 0.2 - frame * 0.7 * 1.7;
+            const _outerAlpha = 0.2 - frame * 0.7;
+            const _outerBorder = 0.1 + frame * 0.9;
+
+            const innerAlpha = _innerAlpha < 0 ? 0 : _innerAlpha;
+            const outerAlpha = _outerAlpha < 0 ? 0 : _outerAlpha;
+            const outerBorder = _outerBorder > 1 ? 1 : _outerBorder;
+
+            grd.addColorStop(0, `rgba(0,0,0,${innerAlpha})`);
+            grd.addColorStop(outerBorder * 0.55, `rgba(${canvasConfig.style.color} ,${outerAlpha})`);
+            grd.addColorStop(outerBorder, `rgba(${canvasConfig.style.color}, 0)`);
+
+            return grd;
+          },
         };
 
-        storage.cacheRevealBitmaps(canvasConfig);
+        canvasConfig.cacheRevealBitmaps();
         storage.canvasList.push(canvasConfig);
       },
+
       removeReveal: ($el: HTMLCanvasElement) => {
         storage.canvasList.find((el, idx) => {
           const answer = $el === el.canvas;
@@ -108,74 +220,57 @@ class RevealStateManager<RevealStateManagerTypes> {
           return answer;
         });
       },
-      getCanvasPaintingStyle(config: CanvasConfig) {
-        let { top, left, width, height } = config.canvas.getBoundingClientRect();
 
-        top = Math.round(top);
-        left = Math.round(left);
-        width = Math.round(width);
-        height = Math.round(height);
-
-        let trueFillRadius;
-
-        if (config.style.fillMode === 'none') {
-          trueFillRadius = 0;
-        } else {
-          trueFillRadius = config.style.fillMode === 'relative'
-            ? Math.max(width, height) * config.style.fillRadius
-            : config.style.fillRadius;
-        }
-
-        const cacheCanvasSize = trueFillRadius * 2;
-
-        return { top, left, width, height, trueFillRadius, cacheCanvasSize };
-      },
-
-      cacheRevealBitmaps: (config: CanvasConfig) => {
-        if (!config.ctx) return;
-
-        const { width, height, trueFillRadius, cacheCanvasSize } = storage.getCanvasPaintingStyle(config);
-
-        config.width = width;
-        config.height = height;
-        config.canvas.width = width;
-        config.canvas.height = height;
-        config.cachedRevealBitmap = [];
-
-        let fillAlpha, grd, revealCanvas, revealCtx;
-
-        for (let i of ['border', 'fill']) {
-          revealCanvas = document.createElement('canvas');
-          revealCanvas.width = cacheCanvasSize;
-          revealCanvas.height = cacheCanvasSize;
-
-          revealCtx = revealCanvas.getContext('2d');
-          if (!revealCtx) return;
-
-          fillAlpha = i === 'border' ? ', 0.6)' : ', 0.3)';
-
-          grd = revealCtx.createRadialGradient(
-            trueFillRadius, trueFillRadius, 0,
-            trueFillRadius, trueFillRadius, trueFillRadius
-          )
-
-          grd.addColorStop(0, 'rgba(' + config.style.color + fillAlpha);
-          grd.addColorStop(1, 'rgba(' + config.style.color + ', 0.0)');
-
-          revealCtx.fillStyle = grd;
-          revealCtx.fillRect(0, 0, cacheCanvasSize, cacheCanvasSize);
-
-          config.cachedRevealBitmap.push({
-            type: i,
-            bitmap: revealCtx.getImageData(0, 0, cacheCanvasSize, cacheCanvasSize)
-          });
-        }
-      },
-      paintAll: (force: boolean) => {
+      paintAll: (frame?: number, force?: boolean) => {
         if (!(storage.mouseInBoundary || (!storage.mouseInBoundary && force))) return;
 
+        if (
+          storage.mousePressed &&
+          storage.mouseReleased &&
+          (storage.mouseUpClientX === null || storage.mouseUpClientY === null)
+        ) {
+          storage.mouseUpClientX = storage.clientX;
+          storage.mouseUpClientY = storage.clientY;
+        }
+
+        if (storage.mousePressed) {
+          if (!frame) frame = 0;
+
+          if (storage.mouseDownAnimateStartFrame === null)
+            storage.mouseDownAnimateStartFrame = frame;
+
+          if (storage.hoveringRevealConfig) {
+            const relativeFrame = frame - storage.mouseDownAnimateStartFrame;
+            storage.mouseDownAnimateCurrentFrame = relativeFrame;
+
+            if (storage.mouseReleased && storage.mouseDownAnimateReleasedFrame === null) {
+              console.log('????');
+              storage.mouseDownAnimateReleasedFrame = relativeFrame;
+            }
+
+            const speed = storage.hoveringRevealConfig.style.revealAnimateSpeed;
+            const accelerateRate = storage.hoveringRevealConfig.style.revealReleasedAccelerateRate;
+
+            storage.mouseDownAnimateLogicFrame = !storage.mouseReleased
+              ? relativeFrame / speed
+              : relativeFrame / speed + (relativeFrame - storage.mouseDownAnimateReleasedFrame) / speed * accelerateRate;
+          }
+
+          if (storage.mouseDownAnimateLogicFrame && storage.mouseDownAnimateLogicFrame > 1) {
+            storage.hoveringRevealConfig = null;
+            storage.mouseUpClientX = null;
+            storage.mouseUpClientY = null;
+            storage.mouseDownAnimateStartFrame = null;
+            storage.mouseDownAnimateCurrentFrame = null;
+            storage.mouseDownAnimateReleasedFrame = null;
+            storage.mouseDownAnimateLogicFrame = null;
+            storage.mousePressed = false;
+            storage.mouseReleased = false;;
+          }
+        }
+
         storage.canvasList.forEach((config, index) => {
-          paintCanvas(config, storage, force, index === 0);
+          paintCanvas(config, storage, frame, force);
         });
 
         storage.dirty = true;
@@ -183,7 +278,9 @@ class RevealStateManager<RevealStateManagerTypes> {
         storage.paintedClientY = storage.clientY;
 
         if (storage.mouseInBoundary) {
-          window.requestAnimationFrame(() => { storage.paintAll() });
+          window.requestAnimationFrame((frame) => {
+            storage.paintAll(frame);
+          });
         }
       },
 
@@ -191,7 +288,21 @@ class RevealStateManager<RevealStateManagerTypes> {
         storage.canvasList.forEach((config) => {
           paintCanvas(config, storage);
         });
-      }
+      },
+
+      getHoveringRevealConfig: () => {
+        return storage.canvasList.find((x) => x.mouseInCanvas()) || null;
+      },
+
+      hoveringRevealConfig: null,
+      mouseUpClientX: null,
+      mouseUpClientY: null,
+      mouseDownAnimateStartFrame: null,
+      mouseDownAnimateCurrentFrame: null,
+      mouseDownAnimateReleasedFrame: null,
+      mouseDownAnimateLogicFrame: null,
+      mousePressed: false,
+      mouseReleased: false,
     };
 
     this._storage.push(storage);
@@ -200,8 +311,13 @@ class RevealStateManager<RevealStateManagerTypes> {
   }
 }
 
-const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?: boolean, debug?: boolean) => {
-  if (storage.clientX === storage.paintedClientX && storage.clientY === storage.paintedClientY && !force) return;
+const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, frame?: number, force?: boolean, debug?: boolean) => {
+  if (
+    storage.clientX === storage.paintedClientX &&
+    storage.clientY === storage.paintedClientY &&
+    storage.hoveringRevealConfig !== config &&
+    !force
+  ) return;
 
   if (!config.ctx) return;
 
@@ -211,10 +327,10 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
   if (!storage.mouseInBoundary) return;
   if (config.cachedRevealBitmap.length < 2) return;
 
-  const { top, left, width, height, trueFillRadius } = storage.getCanvasPaintingStyle(config);
+  const { top, left, width, height, trueFillRadius } = config.getCanvasPaintingStyle();
 
   if (width !== config.width || height !== config.height) {
-    storage.cacheRevealBitmaps(config);
+    config.cacheRevealBitmaps();
   }
 
   const { borderStyle, borderWidth, fillMode } = config.style;
@@ -260,6 +376,27 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?:
   if (relativeY < 0 || relativeY > height) return;
 
   config.ctx.putImageData(config.cachedRevealBitmap[1].bitmap, putX, putY, fillX - putX, fillY - putY, fillW, fillH);
+
+  if (config !== storage.hoveringRevealConfig) return;
+  if (!storage.mousePressed || !storage.mouseDownAnimateLogicFrame) return;
+
+  let animateGrd;
+
+  if (storage.mouseReleased && storage.mouseUpClientX && storage.mouseUpClientY) {
+    animateGrd = config.ctx.createRadialGradient(
+      storage.mouseUpClientX - left, storage.mouseUpClientY - top, 0,
+      relativeX, relativeY, trueFillRadius
+    );
+  } else {
+    animateGrd = config.ctx.createRadialGradient(
+      relativeX, relativeY, 0,
+      relativeX, relativeY, trueFillRadius
+    );
+  }
+
+  config.getHoveringAnimateGrd(storage.mouseDownAnimateLogicFrame, animateGrd);
+  config.ctx.fillStyle = animateGrd;
+  config.ctx.fillRect(fillX, fillY, fillW * 1.5, fillH * 1.5);
 }
 
 

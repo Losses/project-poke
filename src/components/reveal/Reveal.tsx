@@ -22,7 +22,9 @@ const Reveal: React.SFC<RevealProps> = (props) => {
     borderWidth: 1,
     fillMode: 'relative',
     fillRadius: 2,
-    borderWhileNotHover: true
+    borderWhileNotHover: true,
+    revealAnimateSpeed: 2000,
+    revealReleasedAccelerateRate: 3.5
   }) as RevealStyle;
 
   const canvasRef: React.RefObject<HTMLCanvasElement> = React.createRef();
