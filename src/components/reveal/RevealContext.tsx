@@ -14,12 +14,12 @@ export interface RevealContextTypes {
 export type RevealContextStates = RevealContextTypes;
 
 const RevealProvider: React.FC<RevealProviderProps> = (props) => {
-  const [revealState, setRevealState] = React.useState<RevealContextStates>({
+  const revealState = React.useRef<RevealContextStates>({
     storageManager: new RevealStorageManager()
   });
 
   return (
-    <RevealContext.Provider value={{ ...revealState }}>
+    <RevealContext.Provider value={revealState.current}>
       {props.children}
     </RevealContext.Provider>
   );

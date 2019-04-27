@@ -50,7 +50,7 @@ const App: React.FC<AppProps> = () => {
             <List>
               <ListItem>First List Item</ListItem>
               <ListItem>Second List Item</ListItem>
-              <ListItem>Third List Item</ListItem> 
+              <ListItem>Third List Item</ListItem>
               <ListItem>First List Item</ListItem>
               <ListItem>Second List Item</ListItem>
               <ListItem>Third List Item</ListItem>
@@ -76,7 +76,7 @@ const App: React.FC<AppProps> = () => {
               }
               label="Large Tile"
             />
-            <div className={enlarge ? 'test-reveal' : 'test-reveal-large'}>
+            <div className={!enlarge ? 'test-reveal' : 'test-reveal-large'}>
               <Reveal />
             </div>
           </div>
