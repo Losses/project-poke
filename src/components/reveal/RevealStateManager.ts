@@ -1,75 +1,76 @@
-import { isWidthDown } from "@material-ui/core/withWidth";
-
 export interface RevealStateManagerTypes {
-  newBoundary: () => RevealBoundaryStore
+  newBoundary: () => RevealBoundaryStore;
 }
 
 export interface RevealStyle {
-  color: string,
-  borderStyle: 'full' | 'half' | 'none',
-  borderWidth: number,
-  fillMode: 'relative' | 'absolute' | 'none',
-  fillRadius: number,
-  revealAnimateSpeed: number,
-  revealReleasedAccelerateRate: number
+  color: string;
+  borderStyle: 'full' | 'half' | 'none';
+  borderWidth: number;
+  fillMode: 'relative' | 'absolute' | 'none';
+  fillRadius: number;
+  revealAnimateSpeed: number;
+  revealReleasedAccelerateRate: number;
 }
 
 export const revealStyleKeys: string[] = ['color', 'borderStyle', 'borderWidth', 'fillMode', 'fillRadius'];
 
 type CanvasConfig = {
-  canvas: HTMLCanvasElement,
-  ctx: CanvasRenderingContext2D | null,
-  width: number,
-  height: number,
-  style: RevealStyle,
-  cachedRevealBitmap: CachedRevealBitmapSet,
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D | null;
+  width: number;
+  height: number;
+  style: RevealStyle;
+  cachedRevealBitmap: CachedRevealBitmapSet;
   getCanvasPaintingStyle(): {
-    top: number; left: number;
-    width: number; height: number;
-    trueFillRadius: number; cacheCanvasSize: number;
-  },
-  cacheRevealBitmaps(): void,
-  mouseInCanvas(): boolean,
-  getHoveringAnimateGrd(frame: number, grd: CanvasGradient): void,
-}
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+    trueFillRadius: number;
+    cacheCanvasSize: number;
+  };
+  cacheRevealBitmaps(): void;
+  mouseInCanvas(): boolean;
+  getHoveringAnimateGrd(frame: number, grd: CanvasGradient): void;
+};
 
 export type RevealBoundaryStore = {
-  _currentHashId: number,
-  id: number,
+  _currentHashId: number;
+  id: number;
   // The current cursor position relative to window.
-  clientX: number,
-  clientY: number,
+  clientX: number;
+  clientY: number;
   // The cursor position of painted reveal effect.
-  paintedClientX: number,
-  paintedClientY: number,
-  destroy(): void,
+  paintedClientX: number;
+  paintedClientY: number;
+  destroy(): void;
   // Add a new reveal effect.
-  addReveal($el: HTMLCanvasElement, style: RevealStyle): void,
-  removeReveal($el: HTMLCanvasElement): void,
-  mouseInBoundary: boolean,
-  canvasList: Array<CanvasConfig>,
-  dynamicBoundingRect: boolean,
-  paintAll(frame?: number, force?: boolean): void,
-  resetAll(): void,
-  dirty: boolean,
+  addReveal($el: HTMLCanvasElement, style: RevealStyle, boundingElement?: HTMLElement): void;
+  removeReveal($el: HTMLCanvasElement): void;
+  mouseInBoundary: boolean;
+  canvasList: Array<CanvasConfig>;
+  dynamicBoundingRect: boolean;
+  paintAll(frame?: number, force?: boolean): void;
+  resetAll(): void;
+  dirty: boolean;
 
-  getHoveringRevealConfig(): CanvasConfig | null,
-  hoveringRevealConfig: CanvasConfig | null,
+  getHoveringRevealConfig(): CanvasConfig | null;
+  hoveringRevealConfig: CanvasConfig | null;
   // Cursor position while mouse down.
-  mouseUpClientX: number | null,
-  mouseUpClientY: number | null,
-  mouseDownAnimateStartFrame: number | null,
-  mouseDownAnimateCurrentFrame: number | null,
-  mouseDownAnimateLogicFrame: number | null,
-  mousePressed: boolean,
-  mouseReleased: boolean
+  mouseUpClientX: number | null;
+  mouseUpClientY: number | null;
+  mouseDownAnimateStartFrame: number | null;
+  mouseDownAnimateCurrentFrame: number | null;
+  mouseDownAnimateLogicFrame: number | null;
+  mousePressed: boolean;
+  mouseReleased: boolean;
 
-  [key: string]: any
-}
+  [key: string]: any;
+};
 
 export interface CachedRevealBitmap {
-  type: string,
-  bitmap: ImageData
+  type: string;
+  bitmap: ImageData;
 }
 
 export type CachedRevealBitmapSet = CachedRevealBitmap[];
@@ -103,7 +104,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           return answer;
         });
       },
-      addReveal: ($el: HTMLCanvasElement, style: RevealStyle) => {
+      addReveal: ($el: HTMLCanvasElement, style: RevealStyle, boundingElement?: HTMLElement) => {
         const canvasConfig: CanvasConfig = {
           canvas: $el,
           ctx: $el.getContext('2d'),
@@ -113,7 +114,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           style,
 
           getCanvasPaintingStyle: () => {
-            let { top, left, width, height } = canvasConfig.canvas.getBoundingClientRect();
+            let { top, left, width, height } = (boundingElement || canvasConfig.canvas).getBoundingClientRect();
 
             top = Math.round(top);
             left = Math.round(left);
@@ -125,9 +126,10 @@ class RevealStateManager<RevealStateManagerTypes> {
             if (canvasConfig.style.fillMode === 'none') {
               trueFillRadius = 0;
             } else {
-              trueFillRadius = canvasConfig.style.fillMode === 'relative'
-                ? Math.max(width, height) * canvasConfig.style.fillRadius
-                : canvasConfig.style.fillRadius;
+              trueFillRadius =
+                canvasConfig.style.fillMode === 'relative'
+                  ? Math.max(width, height) * canvasConfig.style.fillRadius
+                  : canvasConfig.style.fillRadius;
             }
 
             const cacheCanvasSize = trueFillRadius * 2;
@@ -159,9 +161,13 @@ class RevealStateManager<RevealStateManagerTypes> {
               fillAlpha = i === 'border' ? ', 0.6)' : ', 0.3)';
 
               grd = revealCtx.createRadialGradient(
-                trueFillRadius, trueFillRadius, 0,
-                trueFillRadius, trueFillRadius, trueFillRadius
-              )
+                trueFillRadius,
+                trueFillRadius,
+                0,
+                trueFillRadius,
+                trueFillRadius,
+                trueFillRadius
+              );
 
               grd.addColorStop(0, 'rgba(' + canvasConfig.style.color + fillAlpha);
               grd.addColorStop(1, 'rgba(' + canvasConfig.style.color + ', 0.0)');
@@ -205,7 +211,7 @@ class RevealStateManager<RevealStateManagerTypes> {
             grd.addColorStop(outerBorder, `rgba(${canvasConfig.style.color}, 0)`);
 
             return grd;
-          },
+          }
         };
 
         canvasConfig.cacheRevealBitmaps();
@@ -236,8 +242,7 @@ class RevealStateManager<RevealStateManagerTypes> {
         if (storage.mousePressed) {
           if (!frame) frame = 0;
 
-          if (storage.mouseDownAnimateStartFrame === null)
-            storage.mouseDownAnimateStartFrame = frame;
+          if (storage.mouseDownAnimateStartFrame === null) storage.mouseDownAnimateStartFrame = frame;
 
           if (storage.hoveringRevealConfig) {
             const relativeFrame = frame - storage.mouseDownAnimateStartFrame;
@@ -252,7 +257,8 @@ class RevealStateManager<RevealStateManagerTypes> {
 
             storage.mouseDownAnimateLogicFrame = !storage.mouseReleased
               ? relativeFrame / speed
-              : relativeFrame / speed + (relativeFrame - storage.mouseDownAnimateReleasedFrame) / speed * accelerateRate;
+              : relativeFrame / speed +
+                ((relativeFrame - storage.mouseDownAnimateReleasedFrame) / speed) * accelerateRate;
 
             if (storage.mouseDownAnimateLogicFrame < 0) storage.mouseDownAnimateLogicFrame = 0;
           }
@@ -266,7 +272,7 @@ class RevealStateManager<RevealStateManagerTypes> {
             storage.mouseDownAnimateReleasedFrame = null;
             storage.mouseDownAnimateLogicFrame = null;
             storage.mousePressed = false;
-            storage.mouseReleased = false;;
+            storage.mouseReleased = false;
           }
         }
 
@@ -279,20 +285,20 @@ class RevealStateManager<RevealStateManagerTypes> {
         storage.paintedClientY = storage.clientY;
 
         if (storage.mouseInBoundary) {
-          window.requestAnimationFrame((frame) => {
+          window.requestAnimationFrame(frame => {
             storage.paintAll(frame);
           });
         }
       },
 
       resetAll: () => {
-        storage.canvasList.forEach((config) => {
+        storage.canvasList.forEach(config => {
           paintCanvas(config, storage);
         });
       },
 
       getHoveringRevealConfig: () => {
-        return storage.canvasList.find((x) => x.mouseInCanvas()) || null;
+        return storage.canvasList.find(x => x.mouseInCanvas()) || null;
       },
 
       hoveringRevealConfig: null,
@@ -303,7 +309,7 @@ class RevealStateManager<RevealStateManagerTypes> {
       mouseDownAnimateReleasedFrame: null,
       mouseDownAnimateLogicFrame: null,
       mousePressed: false,
-      mouseReleased: false,
+      mouseReleased: false
     };
 
     this._storage.push(storage);
@@ -312,13 +318,20 @@ class RevealStateManager<RevealStateManagerTypes> {
   }
 }
 
-const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, frame?: number, force?: boolean, debug?: boolean) => {
+const paintCanvas = (
+  config: CanvasConfig,
+  storage: RevealBoundaryStore,
+  frame?: number,
+  force?: boolean,
+  debug?: boolean
+) => {
   if (
     storage.clientX === storage.paintedClientX &&
     storage.clientY === storage.paintedClientY &&
     storage.hoveringRevealConfig !== config &&
     !force
-  ) return;
+  )
+    return;
 
   if (!config.ctx) return;
 
@@ -339,7 +352,10 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, frame?:
   const relativeX = storage.clientX - left;
   const relativeY = storage.clientY - top;
 
-  let fillX = 0, fillY = 0, fillW = 0, fillH = 0;
+  let fillX = 0,
+    fillY = 0,
+    fillW = 0,
+    fillH = 0;
 
   switch (borderStyle) {
     case 'full':
@@ -385,20 +401,20 @@ const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, frame?:
 
   if (storage.mouseReleased && storage.mouseUpClientX && storage.mouseUpClientY) {
     animateGrd = config.ctx.createRadialGradient(
-      storage.mouseUpClientX - left, storage.mouseUpClientY - top, 0,
-      relativeX, relativeY, trueFillRadius
+      storage.mouseUpClientX - left,
+      storage.mouseUpClientY - top,
+      0,
+      relativeX,
+      relativeY,
+      trueFillRadius
     );
   } else {
-    animateGrd = config.ctx.createRadialGradient(
-      relativeX, relativeY, 0,
-      relativeX, relativeY, trueFillRadius
-    );
+    animateGrd = config.ctx.createRadialGradient(relativeX, relativeY, 0, relativeX, relativeY, trueFillRadius);
   }
 
   config.getHoveringAnimateGrd(storage.mouseDownAnimateLogicFrame, animateGrd);
   config.ctx.fillStyle = animateGrd;
   config.ctx.fillRect(fillX, fillY, fillW * 1.5, fillH * 1.5);
-}
+};
 
-
-export default RevealStateManager
+export default RevealStateManager;
