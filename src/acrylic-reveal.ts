@@ -1,15 +1,15 @@
-import RevealStateManager, { RevealBoundaryStore } from "./components/reveal/RevealStateManager";
+import RevealStateManager, { RevealBoundaryStore } from './components/reveal/RevealStateManager';
 
 const globalManager = new RevealStateManager();
 export class AcrylicRevealProvider extends HTMLElement {
-  static readonly ElementName = "acrylic-reveal-provider";
+  static readonly ElementName = 'acrylic-reveal-provider';
   readonly manager = new RevealStateManager();
 }
 customElements.define(AcrylicRevealProvider.ElementName, AcrylicRevealProvider);
 
 export class AcrylicRevealBoundary extends HTMLElement {
-  static readonly ElementName = "acrylic-reveal-bound";
-  storage: RevealBoundaryStore | undefined;
+  static readonly ElementName = 'acrylic-reveal-bound';
+  storage?: RevealBoundaryStore;
   handleMouseEnter = () => {
     this.storage!.mouseInBoundary = true;
     window.requestAnimationFrame(() => this.storage!.paintAll());
@@ -26,46 +26,44 @@ export class AcrylicRevealBoundary extends HTMLElement {
   };
 
   handleMouseDown = () => {
-    this.storage!.mouseDownAnimateStartFrame = null;
-    this.storage!.mousePressed = true;
-    this.storage!.mouseReleased = false;
-    this.storage!.hoveringRevealConfig = this.storage!.getHoveringRevealConfig();
+    this.storage!.initializeAnimation();
   };
 
   handleMouseUp = () => {
-    this.storage!.mouseReleased = true;
+    this.storage!.switchAnimation();
   };
   connectedCallback() {
-    this.style.display = "block";
+    this.style.display = 'inline-block';
     const parent: AcrylicRevealProvider = this.closest(AcrylicRevealProvider.ElementName) as any;
     const manager = this.storage ? parent.manager : globalManager;
     this.storage = manager.newBoundary();
-    this.addEventListener("mouseenter", this.handleMouseEnter);
-    this.addEventListener("mouseleave", this.handleMouseLeave);
-    this.addEventListener("mousemove", this.handleMouseMove);
-    this.addEventListener("mouseup", this.handleMouseUp);
+    this.addEventListener('mouseenter', this.handleMouseEnter);
+    this.addEventListener('mouseleave', this.handleMouseLeave);
+    this.addEventListener('mousemove', this.handleMouseMove);
+    this.addEventListener('mousedown', this.handleMouseDown);
+    this.addEventListener('mouseup', this.handleMouseUp);
   }
 }
 customElements.define(AcrylicRevealBoundary.ElementName, AcrylicRevealBoundary);
 
 export class AcrylicReveal extends HTMLElement {
-  static readonly ElementName = "acrylic-reveal";
-  private root = this.attachShadow({ mode: "open" });
+  static readonly ElementName = 'acrylic-reveal';
+  private root = this.attachShadow({ mode: 'open' });
   private canvas: HTMLCanvasElement;
   private provider: AcrylicRevealBoundary | null = null;
   connectedCallback() {
     this.provider = this.closest(AcrylicRevealBoundary.ElementName) as AcrylicRevealBoundary;
-    this.style.display = "block";
-    if (!this.provider) throw new SyntaxError("You must use " + AcrylicRevealBoundary.ElementName + "!");
-    const div = this.root.querySelector("div")!;
+    this.style.display = 'inline-block';
+    if (!this.provider) throw new SyntaxError('You must use ' + AcrylicRevealBoundary.ElementName + '!');
+    const div = this.root.querySelector('div')!;
     setTimeout(() => {
       this.provider!.storage!.addReveal(
         this.canvas,
         {
-          color: "0, 0, 0",
-          borderStyle: "full",
+          color: '0, 0, 0',
+          borderStyle: 'full',
           borderWidth: 1,
-          fillMode: "relative",
+          fillMode: 'relative',
           fillRadius: 2,
           revealAnimateSpeed: 2000,
           revealReleasedAccelerateRate: 3.5,
@@ -79,7 +77,7 @@ export class AcrylicReveal extends HTMLElement {
   constructor() {
     super();
     this.root.innerHTML = `<div><slot></slot></div><canvas></canvas><style>canvas { top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; } </style>`;
-    this.canvas = this.root.querySelector("canvas")!;
+    this.canvas = this.root.querySelector('canvas')!;
   }
 }
 

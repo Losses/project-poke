@@ -1,3 +1,5 @@
+import { Omit } from '@material-ui/core';
+
 export interface RevealStateManagerTypes {
   newBoundary: () => RevealBoundaryStore;
 }
@@ -43,7 +45,7 @@ type CanvasConfig = {
   getAnimateGrd(frame: number, grd: CanvasGradient): void;
 };
 
-export type RevealBoundaryStore = {
+export type RevealBoundaryStore = Partial<CanvasConfig> & {
   _currentHashId: number;
   id: number;
   // The current cursor position relative to window.
@@ -69,8 +71,6 @@ export type RevealBoundaryStore = {
 
   getRevealAnimationConfig(): CanvasConfig | null;
   revealAnimationConfig: CanvasConfig | null;
-
-  [key: string]: any;
 };
 
 export interface CachedRevealBitmap {
@@ -158,7 +158,8 @@ class RevealStateManager<RevealStateManagerTypes> {
             // const a = document.querySelector('#debug');
             // if (a) a.innerHTML = '';
 
-            for (let i of [0, 1]) { // 0 means border, 1 means fill.
+            for (let i of [0, 1]) {
+              // 0 means border, 1 means fill.
               revealCanvas = document.createElement('canvas');
               revealCanvas.width = cacheCanvasSize;
               revealCanvas.height = cacheCanvasSize;
@@ -251,7 +252,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           }
         }
 
-        storage.animationQueue.forEach((config) => {
+        storage.animationQueue.forEach(config => {
           const currentFrame: number = performance.now();
 
           if (config.mouseDownAnimateStartFrame === null) config.mouseDownAnimateStartFrame = currentFrame;
@@ -262,10 +263,11 @@ class RevealStateManager<RevealStateManagerTypes> {
           const speed = config.style.revealAnimateSpeed;
           const accelerateRate = config.style.revealReleasedAccelerateRate;
 
-          config.mouseDownAnimateLogicFrame = !config.mouseReleased || !config.mouseDownAnimateReleasedFrame
-            ? relativeFrame / speed
-            : relativeFrame / speed +
-            ((relativeFrame - config.mouseDownAnimateReleasedFrame) / speed) * accelerateRate;
+          config.mouseDownAnimateLogicFrame =
+            !config.mouseReleased || !config.mouseDownAnimateReleasedFrame
+              ? relativeFrame / speed
+              : relativeFrame / speed +
+                ((relativeFrame - config.mouseDownAnimateReleasedFrame) / speed) * accelerateRate;
 
           if (config.mouseDownAnimateLogicFrame > 1) storage.cleanUpAnimation(config);
         });
@@ -291,9 +293,8 @@ class RevealStateManager<RevealStateManagerTypes> {
         });
       },
 
-
       initializeAnimation: () => {
-        const config = storage.canvasList.find((x) => x.mouseInCanvas());
+        const config = storage.canvasList.find(x => x.mouseInCanvas());
 
         if (!config) return;
 
@@ -304,14 +305,14 @@ class RevealStateManager<RevealStateManagerTypes> {
       },
 
       switchAnimation: () => {
-        storage.animationQueue.forEach((config) => {
+        storage.animationQueue.forEach(config => {
           if (!config.mouseReleased) {
             config.mouseReleased = true;
             config.mouseDownAnimateReleasedFrame = config.mouseDownAnimateCurrentFrame;
             config.mouseUpClientX = storage.clientX;
             config.mouseUpClientY = storage.clientY;
           }
-        })
+        });
       },
 
       cleanUpAnimation: (config: CanvasConfig) => {
@@ -352,12 +353,7 @@ class RevealStateManager<RevealStateManagerTypes> {
   }
 }
 
-const paintCanvas = (
-  config: CanvasConfig,
-  storage: RevealBoundaryStore,
-  force?: boolean,
-  debug?: boolean
-) => {
+const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?: boolean, debug?: boolean) => {
   const animationPlaying = storage.animationQueue.has(config);
   if (
     storage.clientX === storage.paintedClientX &&
@@ -418,7 +414,7 @@ const paintCanvas = (
   if (isNaN(relativeX) || isNaN(relativeY)) return;
 
   if (storage.mouseInBoundary) {
-    const mouseInCanvas = (relativeX > 0 && relativeX < width) && (relativeY > 0 && relativeY < height);
+    const mouseInCanvas = relativeX > 0 && relativeX < width && (relativeY > 0 && relativeY < height);
 
     if (borderStyle !== 'none') {
       config.ctx.putImageData(config.cachedRevealBitmap[0].bitmap, putX, putY, -putX, -putY, width, height);
@@ -426,7 +422,15 @@ const paintCanvas = (
     }
 
     if (fillMode != 'none' && mouseInCanvas)
-      config.ctx.putImageData(config.cachedRevealBitmap[1].bitmap, putX, putY, fillX - putX, fillY - putY, fillW, fillH);
+      config.ctx.putImageData(
+        config.cachedRevealBitmap[1].bitmap,
+        putX,
+        putY,
+        fillX - putX,
+        fillY - putY,
+        fillW,
+        fillH
+      );
   }
 
   if (!config.mousePressed || !config.mouseDownAnimateLogicFrame) return;
@@ -444,14 +448,7 @@ const paintCanvas = (
       trueFillRadius[1]
     );
   } else {
-    animateGrd = config.ctx.createRadialGradient(
-      relativeX,
-      relativeY,
-      0,
-      relativeX,
-      relativeY,
-      trueFillRadius[1]
-    );
+    animateGrd = config.ctx.createRadialGradient(relativeX, relativeY, 0, relativeX, relativeY, trueFillRadius[1]);
   }
 
   config.getAnimateGrd(config.mouseDownAnimateLogicFrame, animateGrd);
