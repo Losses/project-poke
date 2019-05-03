@@ -17,7 +17,7 @@ export class AcrylicRevealBoundary extends HTMLElement {
 
   handleMouseLeave = () => {
     this.storage!.mouseInBoundary = false;
-    this.storage!.paintAll(true);
+    this.storage!.paintAll(0, true);
   };
 
   handleMouseMove = (ev: MouseEvent) => {
