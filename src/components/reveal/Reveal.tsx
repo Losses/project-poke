@@ -21,7 +21,7 @@ const Reveal: React.SFC<RevealProps> = (props) => {
     borderStyle: 'full',
     borderWidth: 1,
     fillMode: 'relative',
-    fillRadius: 2,
+    fillRadius: 1.5,
     borderWhileNotHover: true,
     revealAnimateSpeed: 2000,
     revealReleasedAccelerateRate: 3.5

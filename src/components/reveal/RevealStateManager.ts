@@ -26,7 +26,7 @@ type CanvasConfig = {
     left: number;
     width: number;
     height: number;
-    trueFillRadius: number;
+    trueFillRadius: number[];
     cacheCanvasSize: number;
   };
   cacheRevealBitmaps(): void;
@@ -69,7 +69,7 @@ export type RevealBoundaryStore = {
 };
 
 export interface CachedRevealBitmap {
-  type: string;
+  type: number;
   bitmap: ImageData;
 }
 
@@ -124,15 +124,15 @@ class RevealStateManager<RevealStateManagerTypes> {
             let trueFillRadius;
 
             if (canvasConfig.style.fillMode === 'none') {
-              trueFillRadius = 0;
+              trueFillRadius = [0, 0];
             } else {
               trueFillRadius =
                 canvasConfig.style.fillMode === 'relative'
-                  ? Math.max(width, height) * canvasConfig.style.fillRadius
-                  : canvasConfig.style.fillRadius;
+                  ? [width, height].sort((a, b) => a - b).map(x => x * canvasConfig.style.fillRadius)
+                  : [canvasConfig.style.fillRadius];
             }
 
-            const cacheCanvasSize = trueFillRadius * 2;
+            const cacheCanvasSize = trueFillRadius[1] * 2;
 
             return { top, left, width, height, trueFillRadius, cacheCanvasSize };
           },
@@ -150,7 +150,10 @@ class RevealStateManager<RevealStateManagerTypes> {
 
             let fillAlpha, grd, revealCanvas, revealCtx;
 
-            for (let i of ['border', 'fill']) {
+            // const a = document.querySelector('#debug');
+            // if (a) a.innerHTML = '';
+
+            for (let i of [0, 1]) { // 0 means border, 1 means fill.
               revealCanvas = document.createElement('canvas');
               revealCanvas.width = cacheCanvasSize;
               revealCanvas.height = cacheCanvasSize;
@@ -158,15 +161,15 @@ class RevealStateManager<RevealStateManagerTypes> {
               revealCtx = revealCanvas.getContext('2d');
               if (!revealCtx) return;
 
-              fillAlpha = i === 'border' ? ', 0.6)' : ', 0.3)';
+              fillAlpha = i === 0 ? ', 0.6)' : ', 0.3)';
 
               grd = revealCtx.createRadialGradient(
-                trueFillRadius,
-                trueFillRadius,
+                cacheCanvasSize / 2,
+                cacheCanvasSize / 2,
                 0,
-                trueFillRadius,
-                trueFillRadius,
-                trueFillRadius
+                cacheCanvasSize / 2,
+                cacheCanvasSize / 2,
+                trueFillRadius[i]
               );
 
               grd.addColorStop(0, 'rgba(' + canvasConfig.style.color + fillAlpha);
@@ -174,6 +177,8 @@ class RevealStateManager<RevealStateManagerTypes> {
 
               revealCtx.fillStyle = grd;
               revealCtx.fillRect(0, 0, cacheCanvasSize, cacheCanvasSize);
+
+              // if (a) a.appendChild(revealCanvas);
 
               canvasConfig.cachedRevealBitmap.push({
                 type: i,
@@ -195,8 +200,6 @@ class RevealStateManager<RevealStateManagerTypes> {
 
           getHoveringAnimateGrd: (frame: number, grd: CanvasGradient) => {
             if (!canvasConfig.ctx) return null;
-
-            const trueFillRadius = Math.max(canvasConfig.canvas.width, canvasConfig.canvas.height);
 
             const _innerAlpha = 0.2 - frame * 0.7 * 1.7;
             const _outerAlpha = 0.1 - frame * 0.05;
@@ -258,7 +261,7 @@ class RevealStateManager<RevealStateManagerTypes> {
             storage.mouseDownAnimateLogicFrame = !storage.mouseReleased
               ? relativeFrame / speed
               : relativeFrame / speed +
-                ((relativeFrame - storage.mouseDownAnimateReleasedFrame) / speed) * accelerateRate;
+              ((relativeFrame - storage.mouseDownAnimateReleasedFrame) / speed) * accelerateRate;
 
             if (storage.mouseDownAnimateLogicFrame < 0) storage.mouseDownAnimateLogicFrame = 0;
           }
@@ -341,7 +344,7 @@ const paintCanvas = (
   if (!storage.mouseInBoundary) return;
   if (config.cachedRevealBitmap.length < 2) return;
 
-  const { top, left, width, height, trueFillRadius } = config.getCanvasPaintingStyle();
+  const { top, left, width, height, cacheCanvasSize, trueFillRadius } = config.getCanvasPaintingStyle();
 
   if (width !== config.width || height !== config.height) {
     config.cacheRevealBitmaps();
@@ -378,8 +381,8 @@ const paintCanvas = (
       break;
   }
 
-  const putX = relativeX - trueFillRadius;
-  const putY = relativeY - trueFillRadius;
+  const putX = relativeX - cacheCanvasSize / 2;
+  const putY = relativeY - cacheCanvasSize / 2;
 
   if (isNaN(relativeX) || isNaN(relativeY)) return;
 
@@ -406,10 +409,10 @@ const paintCanvas = (
       0,
       relativeX,
       relativeY,
-      trueFillRadius
+      cacheCanvasSize
     );
   } else {
-    animateGrd = config.ctx.createRadialGradient(relativeX, relativeY, 0, relativeX, relativeY, trueFillRadius);
+    animateGrd = config.ctx.createRadialGradient(relativeX, relativeY, 0, relativeX, relativeY, trueFillRadius[1]);
   }
 
   config.getHoveringAnimateGrd(storage.mouseDownAnimateLogicFrame, animateGrd);
