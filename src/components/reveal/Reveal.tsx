@@ -24,7 +24,7 @@ const Reveal: React.SFC<RevealProps> = (props) => {
     fillRadius: 1.5,
     borderWhileNotHover: true,
     revealAnimateSpeed: 2000,
-    revealReleasedAccelerateRate: 3.5
+    revealReleasedAccelerateRate: 6
   }) as RevealStyle;
 
   const canvasRef: React.RefObject<HTMLCanvasElement> = React.createRef();
