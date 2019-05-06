@@ -41,28 +41,24 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
     this.storage = props.context.storageManager.newBoundary();
   }
 
-  handleMouseEnter = () => {
-    this.storage.mouseInBoundary = true;
-
-    window.requestAnimationFrame(() => this.storage.paintAll());
+  handlePointerEnter = () => {
+    this.storage.onPointerEnterBoundary();
   }
 
-  handleMouseLeave = () => {
-    this.storage.mouseInBoundary = false;
-
-    this.storage.paintAll(true);
+  handlePointerLeave = () => {
+    this.storage.onPointerLeaveBoudary();
   }
 
-  handleMouseMove = (ev: React.MouseEvent) => {
+  handlePointerMove = (ev: React.MouseEvent) => {
     this.storage.clientX = ev.clientX;
     this.storage.clientY = ev.clientY;
   }
 
-  handleMouseDown = () => {
+  handlePointerDown = () => {
     this.storage.initializeAnimation();
   }
 
-  handleMouseUp = () => {
+  handlePointerUp = () => {
     this.storage.switchAnimation();
   }
 
@@ -71,11 +67,11 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
       <RevealBoundaryContext.Provider value={{ storage: this.storage }}>
         <div
           className="poke-reveal-boundary"
-          onMouseEnter={this.handleMouseEnter}
-          onMouseLeave={this.handleMouseLeave}
-          onMouseMove={this.handleMouseMove}
-          onMouseDown={this.handleMouseDown}
-          onMouseUp={this.handleMouseUp}
+          onPointerEnter={this.handlePointerEnter}
+          onPointerLeave={this.handlePointerLeave}
+          onPointerMove={this.handlePointerMove}
+          onPointerDown={this.handlePointerDown}
+          onPointerUp={this.handlePointerUp}
         >
           {this.props.children}
         </div>
