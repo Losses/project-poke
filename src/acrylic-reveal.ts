@@ -1,5 +1,9 @@
 import RevealStateManager, { RevealBoundaryStore } from './components/reveal/RevealStateManager';
 
+const removeStorageEvent = 'removeStorage';
+const attachStorageEvent = 'attachStorage';
+const replaceStorageEvent = 'replaceStorage';
+
 const globalManager = new RevealStateManager();
 export class AcrylicRevealProvider extends HTMLElement {
   static readonly ElementName = 'acrylic-reveal-provider';
@@ -9,38 +13,57 @@ customElements.define(AcrylicRevealProvider.ElementName, AcrylicRevealProvider);
 
 export class AcrylicRevealBoundary extends HTMLElement {
   static readonly ElementName = 'acrylic-reveal-bound';
-  storage?: RevealBoundaryStore;
+  private _storage!: RevealBoundaryStore | undefined;
+  private get storage() {
+    return this._storage;
+  }
+  private set storage(newS) {
+    const old = this._storage;
+    if (old) this.dispatchEvent(new CustomEvent(removeStorageEvent, { detail: old }));
+    this._storage = newS;
+    this.dispatchEvent(new CustomEvent(attachStorageEvent, { detail: this._storage }));
+    if (old) this.dispatchEvent(new CustomEvent(removeStorageEvent, { detail: { old, new: newS } }));
+  }
+  public waitForStorage(f: (storage: RevealBoundaryStore) => void) {
+    if (this.storage === undefined)
+      this.addEventListener(attachStorageEvent, () => f(this.storage!), {
+        once: true
+      });
+    else f(this.storage);
+  }
+  private appendStorage(force = false) {
+    if (!force) if (this.storage) return;
+    const parent = this.closest(AcrylicRevealProvider.ElementName) as AcrylicRevealProvider;
+    const manager = parent ? parent.manager : globalManager;
+    this.storage = manager.newBoundary();
+  }
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `<slot></slot><style>:host { display: inline-block; } </style>`;
   }
-  handleMouseEnter = () => {
-    this.storage!.mouseInBoundary = true;
-    window.requestAnimationFrame(() => this.storage!.paintAll());
-  };
+  handleMouseEnter = () =>
+    this.waitForStorage(storage => {
+      storage.mouseInBoundary = true;
+      window.requestAnimationFrame(() => storage.paintAll());
+    });
 
-  handleMouseLeave = () => {
-    this.storage!.mouseInBoundary = false;
-    this.storage!.paintAll(0, true);
-  };
+  handleMouseLeave = () =>
+    this.waitForStorage(storage => {
+      storage.mouseInBoundary = false;
+      storage.paintAll(0, true);
+    });
 
-  handleMouseMove = (ev: MouseEvent) => {
-    this.storage!.clientX = ev.clientX;
-    this.storage!.clientY = ev.clientY;
-  };
+  handleMouseMove = (ev: MouseEvent) =>
+    this.waitForStorage(storage => {
+      storage.clientX = ev.clientX;
+      storage.clientY = ev.clientY;
+    });
 
-  handleMouseDown = () => {
-    this.storage!.initializeAnimation();
-  };
-
-  handleMouseUp = () => {
-    this.storage!.switchAnimation();
-  };
+  handleMouseDown = () => this.waitForStorage(storage => storage.initializeAnimation());
+  handleMouseUp = () => this.waitForStorage(storage => storage.switchAnimation());
   connectedCallback() {
-    const parent: AcrylicRevealProvider = this.closest(AcrylicRevealProvider.ElementName) as any;
-    const manager = this.storage ? parent.manager : globalManager;
-    this.storage = manager.newBoundary();
+    this.appendStorage(true);
     this.addEventListener('mouseenter', this.handleMouseEnter);
     this.addEventListener('mouseleave', this.handleMouseLeave);
     this.addEventListener('mousemove', this.handleMouseMove);
@@ -54,12 +77,13 @@ export class AcrylicReveal extends HTMLElement {
   static readonly ElementName = 'acrylic-reveal';
   private root = this.attachShadow({ mode: 'open' });
   private canvas: HTMLCanvasElement;
-  private provider: AcrylicRevealBoundary | null = null;
+  private boundary!: AcrylicRevealBoundary;
   connectedCallback() {
-    this.provider = this.closest(AcrylicRevealBoundary.ElementName) as AcrylicRevealBoundary;
-    if (!this.provider) throw new SyntaxError('You must use ' + AcrylicRevealBoundary.ElementName + '!');
-    setTimeout(() => {
-      this.provider!.storage!.addReveal(this.canvas, {
+    this.boundary = this.closest(AcrylicRevealBoundary.ElementName) as AcrylicRevealBoundary;
+    if (!this.boundary)
+      throw new SyntaxError('You must use ' + AcrylicRevealBoundary.ElementName + ' as the boundary of acrylic!');
+    this.boundary.waitForStorage(storage =>
+      storage.addReveal(this.canvas, {
         color: '0, 0, 0',
         borderStyle: 'full',
         borderWidth: 1,
@@ -68,8 +92,8 @@ export class AcrylicReveal extends HTMLElement {
         revealAnimateSpeed: 2000,
         revealReleasedAccelerateRate: 3.5,
         borderWhileNotHover: true
-      });
-    }, 0);
+      })
+    );
   }
   constructor() {
     super();
