@@ -1,33 +1,31 @@
 import * as React from 'react';
 
-import RevealContext, { RevealContextTypes, RevealConsumer } from './RevealContext';
+import { RevealContextTypes, RevealConsumer } from './RevealContext';
 import { RevealBoundaryStore } from './RevealStateManager';
 
-export type RevealBoundaryProps = {
-  dynamicBoundingRect?: boolean
-};
+export type RevealBoundaryProps = {};
 
 export interface RevealBoundaryState {
-  storage?: RevealBoundaryStore
+  storage?: RevealBoundaryStore;
 }
 
 export type RevealBoundaryContextTypes = RevealBoundaryState;
 
-const RevealBoundary: React.FC<RevealBoundaryProps> = (props) => {
+const RevealBoundary: React.FC<RevealBoundaryProps> = props => {
   return (
     <RevealConsumer>
-      {(context) => (
+      {context => (
         <RevealBoundaryContent context={context} {...props}>
           {props.children}
         </RevealBoundaryContent>
       )}
     </RevealConsumer>
-  )
-}
+  );
+};
 
 export interface RevealBoundaryContentProps {
-  context: RevealContextTypes,
-  [key: string]: any
+  context: RevealContextTypes;
+  [key: string]: any;
 }
 
 const RevealBoundaryContext = React.createContext<RevealBoundaryContextTypes>({} as RevealBoundaryContextTypes);
@@ -43,24 +41,24 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
 
   handlePointerEnter = () => {
     this.storage.onPointerEnterBoundary();
-  }
+  };
 
   handlePointerLeave = () => {
-    this.storage.onPointerLeaveBoudary();
-  }
+    this.storage.onPointerLeaveBoundary();
+  };
 
   handlePointerMove = (ev: React.MouseEvent) => {
     this.storage.clientX = ev.clientX;
     this.storage.clientY = ev.clientY;
-  }
+  };
 
   handlePointerDown = () => {
     this.storage.initializeAnimation();
-  }
+  };
 
   handlePointerUp = () => {
     this.storage.switchAnimation();
-  }
+  };
 
   render() {
     return (
@@ -79,7 +77,6 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
     );
   }
 }
-
 
 const RevealBoundaryConsumer = RevealBoundaryContext.Consumer;
 
