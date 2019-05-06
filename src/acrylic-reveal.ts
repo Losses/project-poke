@@ -20,9 +20,11 @@ export class AcrylicRevealBoundary extends HTMLElement {
   private set storage(newS) {
     const old = this._storage;
     if (old) this.dispatchEvent(new CustomEvent(removeStorageEvent, { detail: old }));
-    this._storage = newS;
-    this.dispatchEvent(new CustomEvent(attachStorageEvent, { detail: this._storage }));
-    if (old) this.dispatchEvent(new CustomEvent(replaceStorageEvent, { detail: { old, new: newS } }));
+    if (newS) {
+      this._storage = newS;
+      this.dispatchEvent(new CustomEvent(attachStorageEvent, { detail: this._storage }));
+      if (old) this.dispatchEvent(new CustomEvent(replaceStorageEvent, { detail: { old, new: newS } }));
+    }
   }
   public waitForStorage(f: (storage: RevealBoundaryStore) => void) {
     if (this.storage === undefined)
@@ -59,6 +61,9 @@ export class AcrylicRevealBoundary extends HTMLElement {
     this.addEventListener('pointerdown', this.handlePointerDown);
     this.addEventListener('pointerup', this.handlePointerUp);
   }
+  disconnectedCallback() {
+    this.storage = undefined;
+  }
 }
 customElements.define(AcrylicRevealBoundary.ElementName, AcrylicRevealBoundary);
 
@@ -67,6 +72,13 @@ export class AcrylicReveal extends HTMLElement {
   private root = this.attachShadow({ mode: 'open' });
   private canvas: HTMLCanvasElement;
   private boundary!: AcrylicRevealBoundary;
+  adoptedCallback() {
+    this.disconnectedCallback();
+    this.connectedCallback();
+  }
+  disconnectedCallback() {
+    this.boundary && this.boundary.waitForStorage(storage => storage.removeReveal(this.canvas));
+  }
   connectedCallback() {
     this.boundary = this.closest(AcrylicRevealBoundary.ElementName) as AcrylicRevealBoundary;
     if (!this.boundary)
@@ -78,9 +90,9 @@ export class AcrylicReveal extends HTMLElement {
         borderWidth: 1,
         fillMode: 'relative',
         fillRadius: 1.5,
+        borderWhileNotHover: true,
         revealAnimateSpeed: 2000,
-        revealReleasedAccelerateRate: 3.5,
-        borderWhileNotHover: true
+        revealReleasedAccelerateRate: 6
       })
     );
   }
