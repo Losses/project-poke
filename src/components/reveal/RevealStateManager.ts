@@ -62,7 +62,7 @@ export type RevealBoundaryStore = Partial<CanvasConfig> & {
   mouseInBoundary: boolean;
   canvasList: CanvasConfig[];
   onPointerEnterBoundary(): void;
-  onPointerLeaveBoudary(): void;
+  onPointerLeaveBoundary(): void;
   paintAll(frame?: number, force?: boolean): void;
   resetAll(): void;
   initializeAnimation(): void;
@@ -254,7 +254,7 @@ class RevealStateManager<RevealStateManagerTypes> {
         if (!storage.raf) storage.raf = window.requestAnimationFrame(() => storage.paintAll());
       },
 
-      onPointerLeaveBoudary: () => {
+      onPointerLeaveBoundary: () => {
         storage.mouseInBoundary = false;
 
         storage.paintAll(0, true);

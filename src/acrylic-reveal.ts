@@ -42,33 +42,22 @@ export class AcrylicRevealBoundary extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `<slot></slot><style>:host { display: inline-block; } </style>`;
   }
-  handleMouseEnter = () =>
-    this.waitForStorage(storage => {
-      storage.mouseInBoundary = true;
-      window.requestAnimationFrame(() => storage.paintAll());
-    });
-
-  handleMouseLeave = () =>
-    this.waitForStorage(storage => {
-      storage.mouseInBoundary = false;
-      storage.paintAll(0, true);
-    });
-
-  handleMouseMove = (ev: MouseEvent) =>
+  handlePointerEnter = () => this.waitForStorage(storage => storage.onPointerEnterBoundary());
+  handlePointerLeave = () => this.waitForStorage(storage => storage.onPointerLeaveBoundary());
+  handlePointerMove = (ev: MouseEvent) =>
     this.waitForStorage(storage => {
       storage.clientX = ev.clientX;
       storage.clientY = ev.clientY;
     });
-
-  handleMouseDown = () => this.waitForStorage(storage => storage.initializeAnimation());
-  handleMouseUp = () => this.waitForStorage(storage => storage.switchAnimation());
+  handlePointerDown = () => this.waitForStorage(storage => storage.initializeAnimation());
+  handlePointerUp = () => this.waitForStorage(storage => storage.switchAnimation());
   connectedCallback() {
     this.appendStorage(true);
-    this.addEventListener('mouseenter', this.handleMouseEnter);
-    this.addEventListener('mouseleave', this.handleMouseLeave);
-    this.addEventListener('mousemove', this.handleMouseMove);
-    this.addEventListener('mousedown', this.handleMouseDown);
-    this.addEventListener('mouseup', this.handleMouseUp);
+    this.addEventListener('pointerenter', this.handlePointerEnter);
+    this.addEventListener('pointerleave', this.handlePointerLeave);
+    this.addEventListener('pointermove', this.handlePointerMove);
+    this.addEventListener('pointerdown', this.handlePointerDown);
+    this.addEventListener('pointerup', this.handlePointerUp);
   }
 }
 customElements.define(AcrylicRevealBoundary.ElementName, AcrylicRevealBoundary);
