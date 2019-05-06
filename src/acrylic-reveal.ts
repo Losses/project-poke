@@ -10,6 +10,11 @@ customElements.define(AcrylicRevealProvider.ElementName, AcrylicRevealProvider);
 export class AcrylicRevealBoundary extends HTMLElement {
   static readonly ElementName = 'acrylic-reveal-bound';
   storage?: RevealBoundaryStore;
+  constructor() {
+    super();
+    const shadow = this.attachShadow({ mode: 'open' });
+    shadow.innerHTML = `<slot></slot><style>:host { display: inline-block; } </style>`;
+  }
   handleMouseEnter = () => {
     this.storage!.mouseInBoundary = true;
     window.requestAnimationFrame(() => this.storage!.paintAll());
@@ -33,7 +38,6 @@ export class AcrylicRevealBoundary extends HTMLElement {
     this.storage!.switchAnimation();
   };
   connectedCallback() {
-    this.style.display = 'inline-block';
     const parent: AcrylicRevealProvider = this.closest(AcrylicRevealProvider.ElementName) as any;
     const manager = this.storage ? parent.manager : globalManager;
     this.storage = manager.newBoundary();
@@ -53,30 +57,32 @@ export class AcrylicReveal extends HTMLElement {
   private provider: AcrylicRevealBoundary | null = null;
   connectedCallback() {
     this.provider = this.closest(AcrylicRevealBoundary.ElementName) as AcrylicRevealBoundary;
-    this.style.display = 'inline-block';
     if (!this.provider) throw new SyntaxError('You must use ' + AcrylicRevealBoundary.ElementName + '!');
-    const div = this.root.querySelector('div')!;
     setTimeout(() => {
-      this.provider!.storage!.addReveal(
-        this.canvas,
-        {
-          color: '0, 0, 0',
-          borderStyle: 'full',
-          borderWidth: 1,
-          fillMode: 'relative',
-          fillRadius: 2,
-          revealAnimateSpeed: 2000,
-          revealReleasedAccelerateRate: 3.5,
-          borderWhileNotHover: true
-        } as any,
-        div
-      );
+      this.provider!.storage!.addReveal(this.canvas, {
+        color: '0, 0, 0',
+        borderStyle: 'full',
+        borderWidth: 1,
+        fillMode: 'relative',
+        fillRadius: 1.5,
+        revealAnimateSpeed: 2000,
+        revealReleasedAccelerateRate: 3.5,
+        borderWhileNotHover: true
+      });
     }, 0);
-    this.canvas.style.transform = `translateY(-${div.getBoundingClientRect().height}px)`; // - + "px";
   }
   constructor() {
     super();
-    this.root.innerHTML = `<div><slot></slot></div><canvas></canvas><style>canvas { top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; } </style>`;
+    this.root.innerHTML = `
+    <div>
+      <slot></slot>
+    </div>
+    <canvas></canvas>
+    <style>
+      div { display: inline; }
+      canvas { top: 0; left: 0; pointer-events: none; width: 100%; height: 100%; position: absolute; }
+      :host { display: inline-block; position: relative; }
+    </style>`;
     this.canvas = this.root.querySelector('canvas')!;
   }
 }

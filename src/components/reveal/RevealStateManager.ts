@@ -12,6 +12,7 @@ export interface RevealStyle {
   fillRadius: number;
   revealAnimateSpeed: number;
   revealReleasedAccelerateRate: number;
+  borderWhileNotHover: boolean;
 }
 
 export const revealStyleKeys: string[] = ['color', 'borderStyle', 'borderWidth', 'fillMode', 'fillRadius'];
@@ -56,7 +57,7 @@ export type RevealBoundaryStore = Partial<CanvasConfig> & {
   paintedClientY: number;
   destroy(): void;
   // Add a new reveal effect.
-  addReveal($el: HTMLCanvasElement, style: RevealStyle, boundingElement?: HTMLElement): void;
+  addReveal($el: HTMLCanvasElement, style: RevealStyle): void;
   removeReveal($el: HTMLCanvasElement): void;
   mouseInBoundary: boolean;
   canvasList: CanvasConfig[];
@@ -109,7 +110,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           return answer;
         });
       },
-      addReveal: ($el: HTMLCanvasElement, style: RevealStyle, boundingElement?: HTMLElement) => {
+      addReveal: ($el: HTMLCanvasElement, style: RevealStyle) => {
         const canvasConfig: CanvasConfig = {
           canvas: $el,
           ctx: $el.getContext('2d'),
@@ -119,7 +120,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           style,
 
           getCanvasPaintingStyle: () => {
-            let { top, left, width, height } = (boundingElement || canvasConfig.canvas).getBoundingClientRect();
+            let { top, left, width, height } = $el.getBoundingClientRect();
 
             top = Math.round(top);
             left = Math.round(left);
