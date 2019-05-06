@@ -4,10 +4,10 @@ const removeStorageEvent = 'removeStorage';
 const attachStorageEvent = 'attachStorage';
 const replaceStorageEvent = 'replaceStorage';
 
-const globalManager = new RevealStateManager();
+const globalStateManager = new RevealStateManager();
 export class AcrylicRevealProvider extends HTMLElement {
   static readonly ElementName = 'acrylic-reveal-provider';
-  readonly manager = new RevealStateManager();
+  readonly stateManager = new RevealStateManager();
 }
 customElements.define(AcrylicRevealProvider.ElementName, AcrylicRevealProvider);
 
@@ -34,8 +34,8 @@ export class AcrylicRevealBoundary extends HTMLElement {
   private appendStorage(force = false) {
     if (!force) if (this.storage) return;
     const parent = this.closest(AcrylicRevealProvider.ElementName) as AcrylicRevealProvider;
-    const manager = parent ? parent.manager : globalManager;
-    this.storage = manager.newBoundary();
+    const stateManager = parent ? parent.stateManager : globalStateManager;
+    this.storage = stateManager.newBoundary();
   }
   constructor() {
     super();

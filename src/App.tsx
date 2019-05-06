@@ -18,9 +18,7 @@ import Reveal from './components/reveal/Reveal';
 
 import theme from './theme/dark';
 
-export interface AppProps {
-
-}
+export interface AppProps {}
 
 const App: React.FC<AppProps> = () => {
   const [enlarge, setEnlarge] = React.useState<boolean>(true);
@@ -44,7 +42,7 @@ const App: React.FC<AppProps> = () => {
             </div>
           </div>
         </RevealBoundary>
-        <RevealBoundary dynamicBoundingRect>
+        <RevealBoundary>
           <div className="list">
             <h1>List example:</h1>
             <List>
@@ -67,13 +65,7 @@ const App: React.FC<AppProps> = () => {
           <div>
             <h1>Use independently:</h1>
             <FormControlLabel
-              control={
-                <Checkbox
-                  checked={enlarge}
-                  onChange={(ev) => setEnlarge(ev.target.checked)}
-                  value="checked"
-                />
-              }
+              control={<Checkbox checked={enlarge} onChange={ev => setEnlarge(ev.target.checked)} value="checked" />}
               label="Large Tile"
             />
             <div className={!enlarge ? 'test-reveal' : 'test-reveal-large'}>
@@ -84,5 +76,5 @@ const App: React.FC<AppProps> = () => {
       </RevealProvider>
     </MuiThemeProvider>
   );
-}
+};
 export default App;

@@ -61,7 +61,6 @@ export type RevealBoundaryStore = Partial<CanvasConfig> & {
   removeReveal($el: HTMLCanvasElement): void;
   mouseInBoundary: boolean;
   canvasList: CanvasConfig[];
-  dynamicBoundingRect: boolean;
   onPointerEnterBoundary(): void;
   onPointerLeaveBoudary(): void;
   paintAll(frame?: number, force?: boolean): void;
@@ -103,7 +102,6 @@ class RevealStateManager<RevealStateManagerTypes> {
       paintedClientY: -1000,
       mouseInBoundary: false,
       canvasList: [],
-      dynamicBoundingRect: false,
       dirty: false,
       raf: null,
       destroy: () => {
