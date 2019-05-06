@@ -22,7 +22,7 @@ export class AcrylicRevealBoundary extends HTMLElement {
     if (old) this.dispatchEvent(new CustomEvent(removeStorageEvent, { detail: old }));
     this._storage = newS;
     this.dispatchEvent(new CustomEvent(attachStorageEvent, { detail: this._storage }));
-    if (old) this.dispatchEvent(new CustomEvent(removeStorageEvent, { detail: { old, new: newS } }));
+    if (old) this.dispatchEvent(new CustomEvent(replaceStorageEvent, { detail: { old, new: newS } }));
   }
   public waitForStorage(f: (storage: RevealBoundaryStore) => void) {
     if (this.storage === undefined)
