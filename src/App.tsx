@@ -39,8 +39,9 @@ const App: React.FC<AppProps> = () => {
               <Button>Team</Button>
             </div>
             <div className="buttons">
-              <Button>Project</Button>
-              <Button>Poke!</Button>
+              <Button>Axiom</Button>
+              <Button>Design</Button>
+              <Button>System</Button>
             </div>
           </div>
         </RevealBoundary>
