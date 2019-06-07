@@ -8,6 +8,7 @@ export interface RevealStyle {
   borderWidth: number;
   fillMode: 'relative' | 'absolute' | 'none';
   fillRadius: number;
+  diffuse: boolean;
   revealAnimateSpeed: number;
   revealReleasedAccelerateRate: number;
 }
@@ -60,7 +61,7 @@ export type RevealBoundaryStore = {
   canvasList: CanvasConfig[];
   dynamicBoundingRect: boolean;
   onPointerEnterBoundary(): void;
-  onPointerLeaveBoudary(): void;
+  onPointerLeaveBoundary(): void;
   paintAll(frame?: number, force?: boolean): void;
   resetAll(): void;
   initializeAnimation(): void;
@@ -255,7 +256,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           storage.raf = window.requestAnimationFrame(() => storage.paintAll());
       },
 
-      onPointerLeaveBoudary: () => {
+      onPointerLeaveBoundary: () => {
         storage.mouseInBoundary = false;
 
         storage.paintAll(0, true);
@@ -408,6 +409,10 @@ const paintCanvas = (
   const relativeX = storage.clientX - left;
   const relativeY = storage.clientY - top;
 
+  const mouseInCanvas = (relativeX > 0 && relativeX < width) && (relativeY > 0 && relativeY < height);
+
+  if (!mouseInCanvas && !config.style.diffuse && !animationPlaying) return;
+
   let fillX = 0,
     fillY = 0,
     fillW = 0,
@@ -440,8 +445,6 @@ const paintCanvas = (
   if (isNaN(relativeX) || isNaN(relativeY)) return;
 
   if (storage.mouseInBoundary) {
-    const mouseInCanvas = (relativeX > 0 && relativeX < width) && (relativeY > 0 && relativeY < height);
-
     if (borderStyle !== 'none') {
       config.ctx.putImageData(config.cachedRevealBitmap[0].bitmap, putX, putY, -putX, -putY, width, height);
       config.ctx.clearRect(fillX, fillY, fillW, fillH);

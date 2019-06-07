@@ -46,7 +46,7 @@ class RevealBoundaryContent extends React.Component<RevealBoundaryContentProps> 
   }
 
   handlePointerLeave = () => {
-    this.storage.onPointerLeaveBoudary();
+    this.storage.onPointerLeaveBoundary();
   }
 
   handlePointerMove = (ev: React.MouseEvent) => {
