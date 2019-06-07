@@ -1,3 +1,5 @@
+import { Omit } from '@material-ui/core';
+
 export interface RevealStateManagerTypes {
   newBoundary: () => RevealBoundaryStore;
 }
@@ -11,6 +13,7 @@ export interface RevealStyle {
   diffuse: boolean;
   revealAnimateSpeed: number;
   revealReleasedAccelerateRate: number;
+  borderWhileNotHover: boolean;
 }
 
 export const revealStyleKeys: string[] = ['color', 'borderStyle', 'borderWidth', 'fillMode', 'fillRadius'];
@@ -44,7 +47,7 @@ type CanvasConfig = {
   getAnimateGrd(frame: number, grd: CanvasGradient): void;
 };
 
-export type RevealBoundaryStore = {
+export type RevealBoundaryStore = Partial<CanvasConfig> & {
   _currentHashId: number;
   id: number;
   // The current cursor position relative to window.
@@ -55,11 +58,10 @@ export type RevealBoundaryStore = {
   paintedClientY: number;
   destroy(): void;
   // Add a new reveal effect.
-  addReveal($el: HTMLCanvasElement, style: RevealStyle, boundingElement?: HTMLElement): void;
+  addReveal($el: HTMLCanvasElement, style: RevealStyle): void;
   removeReveal($el: HTMLCanvasElement): void;
   mouseInBoundary: boolean;
   canvasList: CanvasConfig[];
-  dynamicBoundingRect: boolean;
   onPointerEnterBoundary(): void;
   onPointerLeaveBoundary(): void;
   paintAll(frame?: number, force?: boolean): void;
@@ -73,8 +75,6 @@ export type RevealBoundaryStore = {
 
   getRevealAnimationConfig(): CanvasConfig | null;
   revealAnimationConfig: CanvasConfig | null;
-
-  [key: string]: any;
 };
 
 export interface CachedRevealBitmap {
@@ -103,7 +103,6 @@ class RevealStateManager<RevealStateManagerTypes> {
       paintedClientY: -1000,
       mouseInBoundary: false,
       canvasList: [],
-      dynamicBoundingRect: false,
       dirty: false,
       raf: null,
       destroy: () => {
@@ -114,7 +113,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           return answer;
         });
       },
-      addReveal: ($el: HTMLCanvasElement, style: RevealStyle, boundingElement?: HTMLElement) => {
+      addReveal: ($el: HTMLCanvasElement, style: RevealStyle) => {
         const canvasConfig: CanvasConfig = {
           canvas: $el,
           ctx: $el.getContext('2d'),
@@ -124,7 +123,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           style,
 
           getCanvasPaintingStyle: () => {
-            let { top, left, width, height } = (boundingElement || canvasConfig.canvas).getBoundingClientRect();
+            let { top, left, width, height } = $el.getBoundingClientRect();
 
             top = Math.round(top);
             left = Math.round(left);
@@ -163,7 +162,8 @@ class RevealStateManager<RevealStateManagerTypes> {
             // const a = document.querySelector('#debug');
             // if (a) a.innerHTML = '';
 
-            for (let i of [0, 1]) { // 0 means border, 1 means fill.
+            for (let i of [0, 1]) {
+              // 0 means border, 1 means fill.
               revealCanvas = document.createElement('canvas');
               revealCanvas.width = cacheCanvasSize;
               revealCanvas.height = cacheCanvasSize;
@@ -252,8 +252,7 @@ class RevealStateManager<RevealStateManagerTypes> {
       onPointerEnterBoundary: () => {
         storage.mouseInBoundary = true;
 
-        if (!storage.raf)
-          storage.raf = window.requestAnimationFrame(() => storage.paintAll());
+        if (!storage.raf) storage.raf = window.requestAnimationFrame(() => storage.paintAll());
       },
 
       onPointerLeaveBoundary: () => {
@@ -272,7 +271,7 @@ class RevealStateManager<RevealStateManagerTypes> {
           }
         }
 
-        storage.animationQueue.forEach((config) => {
+        storage.animationQueue.forEach(config => {
           if (!frame) return;
 
           if (config.mouseDownAnimateStartFrame === null) config.mouseDownAnimateStartFrame = frame;
@@ -283,10 +282,11 @@ class RevealStateManager<RevealStateManagerTypes> {
           const speed = config.style.revealAnimateSpeed;
           const accelerateRate = config.style.revealReleasedAccelerateRate;
 
-          config.mouseDownAnimateLogicFrame = !config.mouseReleased || !config.mouseDownAnimateReleasedFrame
-            ? relativeFrame / speed
-            : relativeFrame / speed +
-            ((relativeFrame - config.mouseDownAnimateReleasedFrame) / speed) * accelerateRate;
+          config.mouseDownAnimateLogicFrame =
+            !config.mouseReleased || !config.mouseDownAnimateReleasedFrame
+              ? relativeFrame / speed
+              : relativeFrame / speed +
+                ((relativeFrame - config.mouseDownAnimateReleasedFrame) / speed) * accelerateRate;
 
           if (config.mouseDownAnimateLogicFrame > 1) storage.cleanUpAnimation(config);
         });
@@ -300,7 +300,7 @@ class RevealStateManager<RevealStateManagerTypes> {
         storage.paintedClientY = storage.clientY;
 
         if (storage.mouseInBoundary || storage.animationQueue.size !== 0) {
-          window.requestAnimationFrame((frame) => {
+          window.requestAnimationFrame(frame => {
             storage.paintAll(frame);
           });
         } else {
@@ -314,9 +314,8 @@ class RevealStateManager<RevealStateManagerTypes> {
         });
       },
 
-
       initializeAnimation: () => {
-        const config = storage.canvasList.find((x) => x.mouseInCanvas());
+        const config = storage.canvasList.find(x => x.mouseInCanvas());
 
         if (!config) return;
 
@@ -327,14 +326,14 @@ class RevealStateManager<RevealStateManagerTypes> {
       },
 
       switchAnimation: () => {
-        storage.animationQueue.forEach((config) => {
+        storage.animationQueue.forEach(config => {
           if (!config.mouseReleased) {
             config.mouseReleased = true;
             config.mouseDownAnimateReleasedFrame = config.mouseDownAnimateCurrentFrame;
             config.mouseUpClientX = storage.clientX;
             config.mouseUpClientY = storage.clientY;
           }
-        })
+        });
       },
 
       cleanUpAnimation: (config: CanvasConfig) => {
@@ -375,12 +374,7 @@ class RevealStateManager<RevealStateManagerTypes> {
   }
 }
 
-const paintCanvas = (
-  config: CanvasConfig,
-  storage: RevealBoundaryStore,
-  force?: boolean,
-  debug?: boolean
-) => {
+const paintCanvas = (config: CanvasConfig, storage: RevealBoundaryStore, force?: boolean, debug?: boolean) => {
   const animationPlaying = storage.animationQueue.has(config);
   if (
     storage.clientX === storage.paintedClientX &&
@@ -451,7 +445,15 @@ const paintCanvas = (
     }
 
     if (fillMode != 'none' && mouseInCanvas)
-      config.ctx.putImageData(config.cachedRevealBitmap[1].bitmap, putX, putY, fillX - putX, fillY - putY, fillW, fillH);
+      config.ctx.putImageData(
+        config.cachedRevealBitmap[1].bitmap,
+        putX,
+        putY,
+        fillX - putX,
+        fillY - putY,
+        fillW,
+        fillH
+      );
   }
 
   if (!config.mousePressed || !config.mouseDownAnimateLogicFrame) return;
@@ -468,14 +470,7 @@ const paintCanvas = (
       trueFillRadius[1]
     );
   } else {
-    animateGrd = config.ctx.createRadialGradient(
-      relativeX,
-      relativeY,
-      0,
-      relativeX,
-      relativeY,
-      trueFillRadius[1]
-    );
+    animateGrd = config.ctx.createRadialGradient(relativeX, relativeY, 0, relativeX, relativeY, trueFillRadius[1]);
   }
 
   config.getAnimateGrd(config.mouseDownAnimateLogicFrame, animateGrd);
